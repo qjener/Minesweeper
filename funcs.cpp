@@ -13,7 +13,7 @@ void printGrid(grid* g) {
             for(int x = 0; x < g->width; x++) {
                 if(g->open[x+g->width*y] == 'x') printf("x  ");
                 else if(g->open[x+g->width*y] == 'f') printf("f  ");
-                else printf("%u  ", g->open[x+g->width*y]);
+                else printf("%c  ", g->open[x+g->width*y]);
             }
             printf("\n");
         }
@@ -124,31 +124,31 @@ void buildGrids(grid* g, unsigned x, unsigned y) {
 }
 
 bool revealPos(grid* g, SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
-    if(g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] == 'f' || g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] == 'r') return 1;
-    bool b = drawDigit(grid_cursor_color, g, grid_cursor->x/36, grid_cursor->y/36);
-    SDL_SetRenderDrawColor(rend, grid_cursor_color->r, grid_cursor_color->g, grid_cursor_color->b, 0);
-    SDL_RenderFillRect(rend, grid_cursor);
+    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
+    bool b = drawDigit(rend, grid_cursor, grid_cursor_color, g);
     return b;
 }
 
 void flagPos(grid* g, SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
-    if(g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] == 'f') {
-        g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] = 'x';
+    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
+        g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';
+        g->flags++;
         return;
     }
-    if(g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] != 'x') {
+    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] != 'x') {                                        //return if already revealed
         return;
     }
-    if(g->flags <= 0) {
+    if(g->flags <= 0) {                                                                                         //return if no flags left
         return;
     }
-
+                                                                                                                //execute putting in flag (green)
     grid_cursor_color->r = 46;
     grid_cursor_color->g = 204;
     grid_cursor_color->b = 113;
     
     SDL_SetRenderDrawColor(rend, grid_cursor_color->r, grid_cursor_color->g, grid_cursor_color->b, 0);
-    g->open[grid_cursor->x/36+g->width*(grid_cursor->y/36)] = 'f';
+    SDL_RenderFillRect(rend, grid_cursor);
+    g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] = 'f';
     g->flags--;
     return;
 }
@@ -185,12 +185,11 @@ void saveGame(grid* g) {
     fclose(save);
 }
 
-bool drawDigit(SDL_Color *color, grid* g, int x, int y) {
-    if(x < 0 || y < 0 || x >= g->width || y >= g->height) return 1;
-    g->open[x+g->width*y] = 'r';
-    unsigned num = g->grid[x+g->width*y];
-    //printf("%d, %d", x, y);
-    //SDL_Color color = {255, 255, 255, 255};
+bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color, grid* g) {
+    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') g->flags++;
+    if(grid_cursor->x/GRID_CELL_SIZE < 0 || grid_cursor->y/GRID_CELL_SIZE < 0 || grid_cursor->x/GRID_CELL_SIZE >= g->width || grid_cursor->y/GRID_CELL_SIZE >= g->height) return 1;
+    g->open[(grid_cursor->x/GRID_CELL_SIZE)+(g->width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
+    unsigned num = g->grid[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)];
     switch (num) {
         case 0: 
             color->r = 255;
@@ -244,34 +243,51 @@ bool drawDigit(SDL_Color *color, grid* g, int x, int y) {
             return 0;
             break;
     }
+    SDL_SetRenderDrawColor(rend, color->r, color->g, color->b, 0);
+    SDL_RenderFillRect(rend, grid_cursor);
+
+    if(num == 0) {
+        int i = grid_cursor->x - GRID_CELL_SIZE, j = grid_cursor->y - GRID_CELL_SIZE;
+        for(int n = 0; n < 9; n++, i+=GRID_CELL_SIZE) {
+            if(i/GRID_CELL_SIZE >= 0 && j/GRID_CELL_SIZE >= 0 && i/GRID_CELL_SIZE < g->width && j/GRID_CELL_SIZE < g->height && g->open[i/GRID_CELL_SIZE+g->width*(j/GRID_CELL_SIZE)] != 'r') {
+                grid_cursor->x = i;
+                grid_cursor->y = j;
+                drawDigit(rend, grid_cursor, color, g);
+            }
+            if(n == 2 || n == 5) {
+             j += GRID_CELL_SIZE;
+             i -= 3*GRID_CELL_SIZE;
+        }
+        }
+    }
     return 1;
 }
 
-void setMenu(SDL_Renderer *rend, grid* g, SDL_Color *grid_menu_color, SDL_Rect *grid_menu, int grid_cell_size) {
+void setMenu(SDL_Renderer *rend, grid* g, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
     SDL_SetRenderDrawColor(rend, grid_menu_color->r, grid_menu_color->g, grid_menu_color->b, 0);
     for (int i = 0; i < 4; i ++) {
         if(i == 3) grid_menu->w -= 4;
 
         SDL_RenderFillRect(rend, grid_menu);
-        grid_menu->x += grid_cell_size*(g->width/4);
+        grid_menu->x += GRID_CELL_SIZE*(g->width/4);
         if(i == 3) {
-            grid_menu->w = grid_cell_size * (g->width/4)-4;
+            grid_menu->w = GRID_CELL_SIZE * (g->width/4)-4;
             grid_menu->x = 4;
         }
     }
 }
 
-void reset(grid* g) {
+void reset(grid* g, SDL_Renderer* rend) {
     g = getGrid(true);
+    SDL_RenderClear(rend);
     grid h = *g;
     g = &h;
 }
 
-void useMenu(grid* g, int x, int y) {
+void useMenu(grid* g, SDL_Renderer* rend, int x, int y) {
     if(x < g->width/4) saveGame(g);
-    else if(x < g->width/2) reset(g);
+    else if(x < g->width/2) reset(g, rend);
     else if(x < (g->width/4)*3) {                   //mode switch
-        printf("flag");
         if(!g->mode)g->mode = 1;
         else g->mode = 0;
     }
