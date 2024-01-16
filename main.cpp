@@ -1,22 +1,21 @@
 #include "funcs.h"
 
+
 int main(int argc, char* argv[]) {
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("%s", SDL_GetError());
         return 0;
     }
     
-    grid* g = getGrid(false);
-    grid h = *g;
-    g = &h;
-
-    int window_width = (g->width * GRID_CELL_SIZE) + 1;
-    int window_height = (g->width * GRID_CELL_SIZE) + 1;
+    Grid *g = getGrid();
+    
+    int window_width = (g->getWidth() * GRID_CELL_SIZE) + 1;
+    int window_height = (g->getWidth() * GRID_CELL_SIZE) + 1;
 
     SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
-                                    g->width*GRID_CELL_SIZE, (1+g->width)*GRID_CELL_SIZE, 0);
+                                    g->getWidth()*GRID_CELL_SIZE, (1+g->getWidth())*GRID_CELL_SIZE, 0);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
@@ -26,13 +25,7 @@ int main(int argc, char* argv[]) {
     SDL_Color grid_cursor_color = {255, 255, 255, 255}; // White
     SDL_Color grid_menu_color = {255, 255, 255, 255}; // White
 
-   
-    SDL_Rect grid_cursor = {
-        .x = (g->width - 1) / 2 * GRID_CELL_SIZE,
-        .y = (g->width - 1) / 2 * GRID_CELL_SIZE,
-        .w = GRID_CELL_SIZE,
-        .h = GRID_CELL_SIZE,
-    };
+    
     /*
     SDL_Rect grid_cursor_ghost = {
         grid_cursor.x,
@@ -40,12 +33,21 @@ int main(int argc, char* argv[]) {
         GRID_CELL_SIZE, GRID_CELL_SIZE
     };*/
 
-    SDL_Rect grid_menu = {
+
+SDL_Rect grid_cursor = {
+        .x = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
+        .y = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+
+SDL_Rect grid_menu = {
         .x = 4,
-        .y = g->height * GRID_CELL_SIZE + 2,
-        .w = GRID_CELL_SIZE * (g->width/4)-4,
+        .y = (g->getHeight()) * GRID_CELL_SIZE + 2,
+        .w = GRID_CELL_SIZE * (g->getWidth()/4)-4,
         .h = GRID_CELL_SIZE - 4,
     };
+
 
     SDL_bool quit = SDL_FALSE; 
     SDL_bool mouse_active = SDL_FALSE;
@@ -104,20 +106,20 @@ int main(int argc, char* argv[]) {
         // Draw grid lines.
         SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
 
-        for (int i = 0; i < 1 + g->width * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
             SDL_RenderDrawLine(rend, i, 0, i, window_height);
         }
 
-        for (int i = 0; i < 1 + g->width * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
             SDL_RenderDrawLine(rend, 0, i, window_width, i);
         }
 
-        setMenu(rend, g, &grid_menu_color, &grid_menu);
+        g->setMenu(rend, &grid_menu_color, &grid_menu);
 /*
         SDL_SetRenderDrawColor(rend, 0, 0, 0, 130);
 
-        for (int i = 0; i < 1 + (g->width * GRID_CELL_SIZE)/4; i += GRID_CELL_SIZE*(g->width/4)) {
-            SDL_RenderDrawLine(rend, i, g->height*GRID_CELL_SIZE, i, window_height);
+        for (int i = 0; i < 1 + (g->getWidth() * GRID_CELL_SIZE)/4; i += GRID_CELL_SIZE*(g->getWidth()/4)) {
+            SDL_RenderDrawLine(rend, i, g->getHeight() *GRID_CELL_SIZE, i, window_height);
         }*/
 
         // Draw grid ghost cursor.
@@ -127,19 +129,19 @@ int main(int argc, char* argv[]) {
         }*/
 
         // clicking on the playing field
-        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->width && (grid_cursor.y/GRID_CELL_SIZE) < g->height) {
+        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
             //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
-            if(!g->mode) {
-                if(g->first) buildGrids(g, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                b = revealPos(g, rend, &grid_cursor_color, &grid_cursor);
+            if(!g->getMode()) {
+                if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+                b = g->revealPos(rend, &grid_cursor_color, &grid_cursor);
             } else {
-                flagPos(g, rend, &grid_cursor_color, &grid_cursor);
+                g->flagPos(rend, &grid_cursor_color, &grid_cursor);
             }
         }
 
         // clicking on the menu
-        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->width &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->height-1)) {
-            useMenu(g, rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+            g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
         }
 
 
@@ -149,7 +151,7 @@ int main(int argc, char* argv[]) {
             SDL_Quit();
         }
         if(!b) break;
-        if(!g->fieldstoreveal) victory();
+        if(!g->getFieldtoreveal()) victory();
     }
 
     //SDL_DestroyRenderer(rend);

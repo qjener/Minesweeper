@@ -1,92 +1,109 @@
 #include "funcs.h"
 
-void printGrid(grid* g) {
+bool yorN() {
+    char choice;
+    while(1) {
+        scanf("%c", &choice);
+        getchar();
+        if (choice == 'Y' || choice == 'y') {
+            return true;
+        }else if(choice == 'N' || choice == 'n') {
+            return false;
+        }else {
+            printf("Not a valid answer - try again\n");
+        }
+    }
+}
+
+void Grid::printHidden() {
+    printf("%d\n%d\n%d\n", width, height, nmines);
+    printf("\n   ");
+    for(int i = 1; i <= width; i++) {
+        if(i < 10) printf("%d  ", i);
+        else printf("%d ", i);
+    }
+    printf("\n");
+    for(int y = 0; y < height; y++) {
+        if(y+1 < 10) printf("%d  ", y+1);
+        else printf("%d ", y+1);
+        for(int x = 0; x < width; x++) {
+            if(grid[x+(width*y)] == 10) {
+                printf("•  ");
+            }
+            else printf("%u  ", grid[x+(width*y)]);
+        }
+        printf("\n");
+    }
+}
+
+void Grid::printGrid() {
+    printHidden();
     printf("\n\n   ");
-        for(int i = 1; i <= g->width; i++) {
+        for(int i = 1; i <= width; i++) {
             if(i < 10) printf("%d  ", i);
             else printf("%d ", i);
         }
         printf("\n");
-        for(int y = 0; y < g->height; y++) {
+        for(int y = 0; y < height; y++) {
             if(y+1 < 10) printf("%d  ", y+1);
             else printf("%d ", y+1);
-            for(int x = 0; x < g->width; x++) {
-                if(g->open[x+g->width*y] == 'x') printf("x  ");
-                else if(g->open[x+g->width*y] == 'f') printf("f  ");
-                else printf("%c  ", g->open[x+g->width*y]);
+            for(int x = 0; x < width; x++) {
+                if(open[x+width*y] == 'x') printf("x  ");
+                else if(open[x+width*y] == 'f') printf("f  ");
+                else printf("%c  ", open[x+width*y]);
             }
             printf("\n");
         }
-        printf("Flags: %u\n", g->flags);
+        printf("Flags: %u\n", flags);
 }
 
-grid* getGrid(bool reset) {
-    grid* g;
-    //grid h;
-    /*
+Grid* getGrid() {
+    Grid helper;
     FILE* save;
     if (!access("save.bin", F_OK)) {
         printf("Save file detected - do you want to continue your game? (Y/n)\n");
         if(yorN()) {
             save = fopen("save.bin", "rb");
-            fread(&h, sizeof(grid), 1, save);
-            
-            g = &h;
+            fread(&helper, sizeof(Grid), 1, save);
             fclose(save);
-            return g;
+            helper.printGrid();
+            return new Grid(helper);
         }
-    }*/
-
-    g = (grid*) malloc(sizeof(grid));
-    /*
-    if(!reset) {
-        printf("You are currently playing with a medium playing field size of 16 x 16 and 40 mines\nDo you want to put in your own parameters? (Y/n)\n");
-    }else {
-        printf("\n\nParameters resetting to default...\n\nDo you want to set your own parameters? (Y/n)\n");
     }
+
+    unsigned w, h, m;
     if(yorN()) {
         while(1) {
             printf("Width: ");
-            scanf("%u", &g->width);
+            scanf("%u", &w);
             printf("Height: ");
-            scanf("%u", &g->height);
-            if(g->width*g->height > GRID_SIZE) {
+            scanf("%u", &h);
+            if(w*h > GRID_SIZE) {
                 printf("Chosen playingfield is too big - pls set a smaller one\n");
                 continue;
             }
             printf("Number of mines: ");
-            scanf("%u", &g->nmines);
-            if(g->nmines > g->width*g->height) {
-                printf("Too many mines - pls select less than %u (this is depended on your chosen field size)\n", g->width*g->height);
+            scanf("%u", &m);
+            if(m > w*h) {
+                printf("Too many mines - pls select less than %u (this is depended on your chosen field size)\n", w*h);
                 continue;
             }
             break;
         }
-        if(g->width == 16 && g->height == 16 && g->nmines == 40) {
+        if(w == 16 && h == 16 && m == 40) {
             printf("\nvery original\n");
         }
         getchar();
-    }else {*/
-        g->width = 16, g->height = 16, g->nmines = 40;
-    //}
-    g->fieldstoreveal = g->width*g->height-g->nmines;
-    for(int j = 0; j < g->height; j++) {
-        for(int i = 0; i < g->width; i++) {
-            g->grid[i+g->width*j] = 0;
-            g->open[i+g->width*j] = 'x';
-        }
+        return new Grid(w, h, m);
+    }else {
+        return new Grid();
     }
-
-    g->flags = g->nmines;
-    g->first = true;
-    g->mode = 0;
-    return g;
 }
 
-void addNumbers(grid* g, int x, int y) {
+void Grid::addNumbers(int x, int y) {
     for(unsigned n = 0; n < 9; n++, y++) {
-        if(x >= 0 && y >= 0 && x < g->width && y < g->height && g->grid[x+g->width*y] != 10) {
-            g->grid[x+g->width*y] += 1;
+        if(x >= 0 && y >= 0 && x < width && y < height && grid[x+width*y] != 10) {
+            grid[x+width*y] += 1;
         }
         if(n == 2 || n == 5) {
             x++;
@@ -95,9 +112,9 @@ void addNumbers(grid* g, int x, int y) {
     }
 }
 
-bool isStart(grid* g, int current, int x, int y) {
+bool Grid::isStart(int current, int x, int y) {
     for(unsigned n = 0; n < 9; n++, y++) {
-        if(x >= 0 && y >= 0 && x < g->width && y < g->height && current == x+g->width*y) {
+        if(x >= 0 && y >= 0 && x < width && y < height && current == x+width*y) {
             return true;
         }
         if(n == 2 || n == 5) {
@@ -108,48 +125,46 @@ bool isStart(grid* g, int current, int x, int y) {
     return false;
 }
 
-void buildGrids(grid* g, unsigned x, unsigned y) {
+void Grid::buildGrids(unsigned x, unsigned y) {
     unsigned current;
     srand(time(NULL));
-    for(int i = 0 ; i < g->nmines; i++ ) {
-        current = rand() % (g->width * g->height);
-        if(g->grid[current] == 10 || isStart(g, current, x-1, y-1)) {
+    for(int i = 0 ; i < nmines; i++ ) {
+        current = rand() % (width * height);
+        if(grid[current] == 10 || isStart(current, x-1, y-1)) {
             i--;
             continue;
         }
-        g->grid[current] = 10;
-        addNumbers(g, current % g->width-1, current/g->width-1);
+        grid[current] = 10;
+        addNumbers(current % width-1, current/width-1);
     }
-    g->first = false;
+    first = false;
 }
 
-bool revealPos(grid* g, SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
-    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
-    bool b = drawDigit(rend, grid_cursor, grid_cursor_color, g);
+bool Grid::revealPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
+    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
+    bool b = drawDigit(rend, grid_cursor, grid_cursor_color);
     return b;
 }
 
-void flagPos(grid* g, SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
-    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
-        g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';
-        g->flags++;
+void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
+    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
+        open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';
+        flags++;
+        SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
+        SDL_RenderFillRect(rend, grid_cursor);
         return;
     }
-    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] != 'x') {                                        //return if already revealed
+    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] != 'x') {                                        //return if already revealed
         return;
     }
-    if(g->flags <= 0) {                                                                                         //return if no flags left
+    if(flags <= 0) {                                                                                         //return if no flags left
         return;
     }
                                                                                                                 //execute putting in flag (green)
-    grid_cursor_color->r = 46;
-    grid_cursor_color->g = 204;
-    grid_cursor_color->b = 113;
-    
-    SDL_SetRenderDrawColor(rend, grid_cursor_color->r, grid_cursor_color->g, grid_cursor_color->b, 0);
+    SDL_SetRenderDrawColor(rend, 46, 204, 113, 0);
     SDL_RenderFillRect(rend, grid_cursor);
-    g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] = 'f';
-    g->flags--;
+    open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'f';
+    flags--;
     return;
 }
 
@@ -161,35 +176,29 @@ void victory() {
 ;
 }
 
-void saveGame(grid* g) {
-    if(g->first) {
+void Grid::saveGame() {
+    if(first) {
         printf("You cant save an unloaded game - pls start playing first\n");
         return;
     }
-    grid h = *g;
+    Grid h = *this;
     FILE* save;
     save = fopen("save.bin", "wb");
     if (save == NULL) {
         printf("The file is not opened - try again");
         return;
     }
-    else {
-        for(int j = 0; j < g->height; j++) {
-            for(int i = 0; i < g->width; i++) {
-                ;
-            }
-        }
-        printf("Your game was saved successfully");
-    }
     fwrite(&h, sizeof(grid), 1, save);
     fclose(save);
+    printf("Your game was saved successfully");
+    printGrid();
 }
 
-bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color, grid* g) {
-    if(g->open[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') g->flags++;
-    if(grid_cursor->x/GRID_CELL_SIZE < 0 || grid_cursor->y/GRID_CELL_SIZE < 0 || grid_cursor->x/GRID_CELL_SIZE >= g->width || grid_cursor->y/GRID_CELL_SIZE >= g->height) return 1;
-    g->open[(grid_cursor->x/GRID_CELL_SIZE)+(g->width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
-    unsigned num = g->grid[grid_cursor->x/GRID_CELL_SIZE+g->width*(grid_cursor->y/GRID_CELL_SIZE)];
+bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color) {
+    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') flags++;
+    if(grid_cursor->x/GRID_CELL_SIZE < 0 || grid_cursor->y/GRID_CELL_SIZE < 0 || grid_cursor->x/GRID_CELL_SIZE >= width || grid_cursor->y/GRID_CELL_SIZE >= height) return 1;
+    open[(grid_cursor->x/GRID_CELL_SIZE)+(width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
+    unsigned num = grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)];
     switch (num) {
         case 0: 
             color->r = 255;
@@ -249,10 +258,10 @@ bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color, grid
     if(num == 0) {
         int i = grid_cursor->x - GRID_CELL_SIZE, j = grid_cursor->y - GRID_CELL_SIZE;
         for(int n = 0; n < 9; n++, i+=GRID_CELL_SIZE) {
-            if(i/GRID_CELL_SIZE >= 0 && j/GRID_CELL_SIZE >= 0 && i/GRID_CELL_SIZE < g->width && j/GRID_CELL_SIZE < g->height && g->open[i/GRID_CELL_SIZE+g->width*(j/GRID_CELL_SIZE)] != 'r') {
+            if(i/GRID_CELL_SIZE >= 0 && j/GRID_CELL_SIZE >= 0 && i/GRID_CELL_SIZE < width && j/GRID_CELL_SIZE < height && open[i/GRID_CELL_SIZE+width*(j/GRID_CELL_SIZE)] != 'r') {
                 grid_cursor->x = i;
                 grid_cursor->y = j;
-                drawDigit(rend, grid_cursor, color, g);
+                drawDigit(rend, grid_cursor, color);
             }
             if(n == 2 || n == 5) {
              j += GRID_CELL_SIZE;
@@ -263,34 +272,90 @@ bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color, grid
     return 1;
 }
 
-void setMenu(SDL_Renderer *rend, grid* g, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
+void Grid::setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
     SDL_SetRenderDrawColor(rend, grid_menu_color->r, grid_menu_color->g, grid_menu_color->b, 0);
     for (int i = 0; i < 4; i ++) {
         if(i == 3) grid_menu->w -= 4;
 
         SDL_RenderFillRect(rend, grid_menu);
-        grid_menu->x += GRID_CELL_SIZE*(g->width/4);
+        grid_menu->x += GRID_CELL_SIZE*(width/4);
         if(i == 3) {
-            grid_menu->w = GRID_CELL_SIZE * (g->width/4)-4;
+            grid_menu->w = GRID_CELL_SIZE * (width/4)-4;
             grid_menu->x = 4;
         }
     }
 }
 
-void reset(grid* g, SDL_Renderer* rend) {
-    g = getGrid(true);
-    SDL_RenderClear(rend);
-    grid h = *g;
-    g = &h;
+void Grid::reset(SDL_Renderer* rend) {
+    SDL_Rect grid_resetter = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE * width,
+        .h = GRID_CELL_SIZE * height,
+    };
+    SDL_SetRenderDrawColor(rend, 0, 0, 0, 0);
+    SDL_RenderFillRect(rend, &grid_resetter);
+    printf("\n\nParameters resetting to default...\n\nDo you want to set your own parameters? (Y/n)\n");
+    unsigned w, h, m;
+    if(yorN()) {
+        while(1) {
+            printf("Width: ");
+            scanf("%u", &w);
+            printf("Height: ");
+            scanf("%u", &h);
+            if(w*h > GRID_SIZE) {
+                printf("Chosen playingfield is too big - pls set a smaller one\n");
+                continue;
+            }
+            printf("Number of mines: ");
+            scanf("%u", &m);
+            if(m > w*h) {
+                printf("Too many mines - pls select less than %u (this is depended on your chosen field size)\n", w*h);
+                continue;
+            }
+            break;
+        }
+        if(w == 16 && h == 16 && m == 40) {
+            printf("\nvery original\n");
+        }
+        getchar();
+        width = w;
+        height = h;
+        nmines = m;
+        fieldstoreveal = width*height-nmines;
+        flags = nmines;
+        first = true;
+        mode = 0;
+        for(int j = 0; j < height; j++) {
+            for(int i = 0; i < width; i++) {
+                grid[i+width*j] = 0;
+                open[i+width*j] = 'x';
+            }
+        }
+    }else {
+        width = 16;
+        height = 16;
+        nmines = 40;
+        fieldstoreveal = width*height-nmines;
+        flags = nmines;
+        first = true;
+        mode = 0;
+        for(int j = 0; j < height; j++) {
+            for(int i = 0; i < width; i++) {
+                grid[i+width*j] = 0;
+                open[i+width*j] = 'x';
+            }
+        }
+    }
 }
 
-void useMenu(grid* g, SDL_Renderer* rend, int x, int y) {
-    if(x < g->width/4) saveGame(g);
-    else if(x < g->width/2) reset(g, rend);
-    else if(x < (g->width/4)*3) {                   //mode switch
-        if(!g->mode)g->mode = 1;
-        else g->mode = 0;
+void Grid::useMenu(SDL_Renderer* rend, int x, int y) {
+    if(x < width/4) saveGame();
+    else if(x < width/2) reset(rend);
+    else if(x < (width/4)*3) {                   //mode switch
+        if(!mode)mode = 1;
+        else mode = 0;
     }
-    else if(x < g->width) {;}
+    else if(x < width) {exit(1);}
     return;
 }
