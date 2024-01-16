@@ -137,11 +137,13 @@ SDL_Rect grid_menu = {
             } else {
                 g->flagPos(rend, &grid_cursor_color, &grid_cursor);
             }
+            g->printGrid();
         }
 
         // clicking on the menu
         if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
             g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+            g->printGrid();
         }
 
 
@@ -150,7 +152,10 @@ SDL_Rect grid_menu = {
         if(quit == SDL_TRUE) {
             SDL_Quit();
         }
-        if(!b) break;
+        if(!b) {
+            gameOver(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+            break;
+        }
         if(!g->getFieldtoreveal()) victory();
     }
 

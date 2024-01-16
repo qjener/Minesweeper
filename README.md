@@ -6,7 +6,7 @@
 
     -all icons are still missing, currently there are only colors
     -victory and game over are not implemented
-    -cant import save files
+    -cant either export or import save files
     -to play it requires the SDL2.dll file in the same folder and the whole sdl2 library installed -_-
 
 ## Compile and run:

@@ -28,7 +28,7 @@ void Grid::printHidden() {
         else printf("%d ", y+1);
         for(int x = 0; x < width; x++) {
             if(grid[x+(width*y)] == 10) {
-                printf("•  ");
+                printf("10 ");                            //•
             }
             else printf("%u  ", grid[x+(width*y)]);
         }
@@ -100,18 +100,6 @@ Grid* getGrid() {
     }
 }
 
-void Grid::addNumbers(int x, int y) {
-    for(unsigned n = 0; n < 9; n++, y++) {
-        if(x >= 0 && y >= 0 && x < width && y < height && grid[x+width*y] != 10) {
-            grid[x+width*y] += 1;
-        }
-        if(n == 2 || n == 5) {
-            x++;
-            y -= 3;
-        }
-    }
-}
-
 bool Grid::isStart(int current, int x, int y) {
     for(unsigned n = 0; n < 9; n++, y++) {
         if(x >= 0 && y >= 0 && x < width && y < height && current == x+width*y) {
@@ -125,7 +113,20 @@ bool Grid::isStart(int current, int x, int y) {
     return false;
 }
 
+void Grid::addNumbers(int x, int y) {
+    for(unsigned n = 0; n < 9; n++, y++) {
+        if(x >= 0 && y >= 0 && x < width && y < height && grid[x+width*y] != 10) {
+            grid[x+width*y] += 1;
+        }
+        if(n == 2 || n == 5) {
+            x++;
+            y -= 3;
+        }
+    }
+}
+
 void Grid::buildGrids(unsigned x, unsigned y) {
+    if(open[x+width*y] == 'f') return;
     unsigned current;
     srand(time(NULL));
     for(int i = 0 ; i < nmines; i++ ) {
@@ -135,15 +136,17 @@ void Grid::buildGrids(unsigned x, unsigned y) {
             continue;
         }
         grid[current] = 10;
+        //printf("%u", grid[current]);
+        //printGrid();
         addNumbers(current % width-1, current/width-1);
     }
     first = false;
+    
 }
 
 bool Grid::revealPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
-    bool b = drawDigit(rend, grid_cursor, grid_cursor_color);
-    return b;
+    return drawDigit(rend, grid_cursor, grid_cursor_color);
 }
 
 void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
@@ -168,12 +171,12 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
     return;
 }
 
-void gameOver() {
-    ;
+void gameOver(int x, int y) {
+    printf("\nPosition (%d,%d) killed you", x, y);
 }
 
 void victory() {
-;
+printf("\nGOOD JOB");
 }
 
 void Grid::saveGame() {
@@ -191,7 +194,6 @@ void Grid::saveGame() {
     fwrite(&h, sizeof(grid), 1, save);
     fclose(save);
     printf("Your game was saved successfully");
-    printGrid();
 }
 
 bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color) {
@@ -252,6 +254,7 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color
             return 0;
             break;
     }
+    fieldstoreveal--;
     SDL_SetRenderDrawColor(rend, color->r, color->g, color->b, 0);
     SDL_RenderFillRect(rend, grid_cursor);
 

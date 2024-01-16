@@ -68,6 +68,9 @@ public:
     unsigned getFieldtoreveal() {
         return fieldstoreveal;
     }
+    char getOpenPos(int x, int y) {
+        return open[x/width*y];
+    }
 
 public:
     void printHidden();
@@ -88,6 +91,6 @@ public:
 //if you comment a function like this you can alway see their description when hovering them anywhere
 //the description should say what the function does and what what it needs as parameter
 Grid* getGrid();
-void gameOver();
+void gameOver(int x, int y);
 void victory();
 bool yorN();
