@@ -1,11 +1,11 @@
 #include <time.h>
 #include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <vector>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -72,7 +72,11 @@ public:
         return open[x/width*y];
     }
 
-public:
+    void setMode(unsigned m) {
+        mode = m;
+    }
+
+
     void printHidden();
     void printGrid();
     void buildGrids(unsigned x, unsigned y);
@@ -82,9 +86,40 @@ public:
     void flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor);
     void saveGame();
     bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color);
-    void setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *grid_menu);
-    void useMenu(SDL_Renderer* rend, int x, int y);
     void reset(SDL_Renderer* rend);
+};
+
+class Button {
+public:
+    SDL_Rect area, text_rect;
+    SDL_Texture* text;
+    SDL_Color color;
+    string name;
+    TTF_Font *font;
+    
+public:
+    Button(SDL_Renderer* rend) : name("Button") {
+        area = {
+            .x = 0,
+            .y = 0,
+            .w = 72,
+            .h = 36,
+        };
+        color = {255, 255, 255, 0};
+        cout << area.x << area.y << area.w << area.h << name << endl;
+        font = TTF_OpenFont("Times New Roman.ttf", 24);
+        get_text_and_rect(rend);
+        
+    }
+    Button(SDL_Renderer* rend, SDL_Rect a, SDL_Color c, string n) : area(a), color(c), name(n) {
+        cout << area.x << area.y << area.w << area.h << name << endl;
+        font = TTF_OpenFont("Times New Roman.ttf", 24);
+        get_text_and_rect(rend);
+    }
+    
+
+    void get_text_and_rect(SDL_Renderer *renderer);
+    void useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
 };
 
 

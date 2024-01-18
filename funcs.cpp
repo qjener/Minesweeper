@@ -275,7 +275,7 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color
     return 1;
 }
 
-void Grid::setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
+/*void Grid::setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
     SDL_SetRenderDrawColor(rend, grid_menu_color->r, grid_menu_color->g, grid_menu_color->b, 0);
     for (int i = 0; i < 4; i ++) {
         if(i == 3) grid_menu->w -= 4;
@@ -287,7 +287,7 @@ void Grid::setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *gri
             grid_menu->x = 4;
         }
     }
-}
+}*/
 
 void Grid::reset(SDL_Renderer* rend) {
     SDL_Rect grid_resetter = {
@@ -352,13 +352,34 @@ void Grid::reset(SDL_Renderer* rend) {
     }
 }
 
-void Grid::useMenu(SDL_Renderer* rend, int x, int y) {
-    if(x < width/4) saveGame();
-    else if(x < width/2) reset(rend);
-    else if(x < (width/4)*3) {                   //mode switch
-        if(!mode)mode = 1;
-        else mode = 0;
+/*
+void Menu::useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
+    if(x < g->getWidth()/4) g->saveGame();
+    else if(x < g->getWidth()/2) g->reset(rend);
+    else if(x < (g->getWidth()/4)*3) {                   //mode switch
+        if(!g->getMode())g->setMode(1);
+        else g->setMode(0);
     }
-    else if(x < width) {exit(1);}
+    else if(x < g->getWidth()) {exit(1);}
     return;
+}*/
+
+
+void Button::get_text_and_rect(SDL_Renderer *rend) {
+    int text_width;
+    int text_height;
+    SDL_Surface *surface;
+
+    surface = TTF_RenderText_Solid(font, name.c_str(), color);
+    text = SDL_CreateTextureFromSurface(rend, surface);
+    text_width = surface->w;
+    text_height = surface->h;
+
+    cout << text_width << endl << text_height;
+    SDL_FreeSurface(surface);
+    text_rect.x = area.x + (area.w/2)-(text_width/2);
+    text_rect.y = area.y + (area.h/2)-(text_height/2);
+    text_rect.w = text_width;
+    text_rect.h = text_height;
+    cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
 }

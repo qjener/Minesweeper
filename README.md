@@ -5,13 +5,17 @@
 ## To-Do:
 
     -all icons are still missing, currently there are only colors
-    -victory and game over are not implemented
+    -victory and game over are not well implemented
     -cant either export or import save files
-    -to play it requires the SDL2.dll file in the same folder and the whole sdl2 library installed -_-
+    -menu is not working 
+    -the button class doesnt work
 
 ## Compile and run:
+
+### MAKEFILE WORKS
+
 the paths in this should be changed depending on your personal sdl library location
 
-    g++ main.cpp funcs.cpp -IC:\eigene\dev_lib\mingw\include -LC:\eigene\dev_lib\mingw\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o Minesweeper
+    g++ main.cpp funcs.cpp -Wall -lmingw32 -lSDL2main -lSDL2 -Ix86_64-w64-mingw32\include -Lx86_64-w64-mingw32\lib -o Minesweeper
 
     .\Minesweeper

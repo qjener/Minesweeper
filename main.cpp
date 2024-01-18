@@ -1,9 +1,13 @@
 #include "funcs.h"
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
-        printf("%s", SDL_GetError());
+        cout << "Error initializing SDL: " << SDL_GetError() << endl;
+        return 0;
+    }
+    if ( TTF_Init() < 0 ) {
+	    cout << "Error initializing SDL_ttf: " << TTF_GetError() << endl;
         return 0;
     }
     
@@ -16,16 +20,26 @@ int main(int argc, char* argv[]) {
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
                                     g->getWidth()*GRID_CELL_SIZE, (1+g->getWidth())*GRID_CELL_SIZE, 0);
+    SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
+
+    SDL_Rect area = {
+        .x = GRID_CELL_SIZE*g->getWidth(),
+        .y = GRID_CELL_SIZE*g->getHeight(),
+        .w = GRID_CELL_SIZE,
+        .h = (g->getHeight()/4),
+    };
+    SDL_Color c = {255,255,255,0};
+    Button *button = new Button(rend, area, c, "Save");
+    //Menu* m = new Menu(g, rend);
 
     //SDL_Color grid_background = {22, 22, 22, 255}; // Barely Black
     SDL_Color grid_line_color = {44, 44, 44, 255}; // Dark grey
     //SDL_Color grid_cursor_ghost_color = {44, 44, 44, 255};
     SDL_Color grid_cursor_color = {255, 255, 255, 255}; // White
-    SDL_Color grid_menu_color = {255, 255, 255, 255}; // White
+    //SDL_Color grid_menu_color = {255, 255, 255, 255}; // White
 
-    
     /*
     SDL_Rect grid_cursor_ghost = {
         grid_cursor.x,
@@ -33,21 +47,12 @@ int main(int argc, char* argv[]) {
         GRID_CELL_SIZE, GRID_CELL_SIZE
     };*/
 
-
-SDL_Rect grid_cursor = {
+    SDL_Rect grid_cursor = {
         .x = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
         .y = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
         .w = GRID_CELL_SIZE,
         .h = GRID_CELL_SIZE,
     };
-
-SDL_Rect grid_menu = {
-        .x = 4,
-        .y = (g->getHeight()) * GRID_CELL_SIZE + 2,
-        .w = GRID_CELL_SIZE * (g->getWidth()/4)-4,
-        .h = GRID_CELL_SIZE - 4,
-    };
-
 
     SDL_bool quit = SDL_FALSE; 
     SDL_bool mouse_active = SDL_FALSE;
@@ -114,7 +119,7 @@ SDL_Rect grid_menu = {
             SDL_RenderDrawLine(rend, 0, i, window_width, i);
         }
 
-        g->setMenu(rend, &grid_menu_color, &grid_menu);
+        //g->setMenu(rend, &grid_menu_color, &grid_menu);
 /*
         SDL_SetRenderDrawColor(rend, 0, 0, 0, 130);
 
@@ -141,11 +146,12 @@ SDL_Rect grid_menu = {
         }
 
         // clicking on the menu
-        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+        /*if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
             g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
             g->printGrid();
-        }
+        }*/
 
+        SDL_RenderCopy(rend, button->text, NULL, &(button->area));
 
         mouse_click = SDL_FALSE;
         SDL_RenderPresent(rend);
