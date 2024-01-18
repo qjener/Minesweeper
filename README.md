@@ -13,10 +13,10 @@
 
 ## Compile and run:
 
-### MAKEFILE WORKS
+### SINCE THE MAKEFILE WORKS THIS IS NOT NECESSARY
 
 the paths in this should be changed depending on your personal sdl library location
 
-    g++ main.cpp funcs.cpp -Wall -lmingw32 -lSDL2main -lSDL2 -Ix86_64-w64-mingw32\include -Lx86_64-w64-mingw32\lib -o Minesweeper
+    g++ -ISDL\SDL\include  -LSDL\SDL\lib  funcs.cpp main.cpp test.cpp -Wall -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -o Minesweeper
 
     .\Minesweeper
