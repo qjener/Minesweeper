@@ -175,19 +175,7 @@ void gameOver(int x, int y) {
     printf("\nPosition (%d,%d) killed you", x, y);
 }
 
-void victory(SDL_Renderer* rend,Grid* g, SDL_Surface* win) {
-    SDL_Rect victory_screen = {
-        .x = 0,
-        .y = 0,
-        .w = GRID_CELL_SIZE*2,
-        .h = GRID_CELL_SIZE,
-        };
-    //cout << victory_screen.w << " " << victory_screen.h;
-    SDL_SetRenderDrawColor(rend, 255, 255, 255, 0);
-    SDL_RenderFillRect(rend, &victory_screen);
-    TextBox V = TextBox(victory_screen, {0,0,0}, {255,255,255}, "Victory");
-    V.get_text_and_rect(rend);
-}
+//void victory(SDL_Renderer* rend,Grid* g, SDL_Surface* win){}
 
 void Grid::saveGame() {
     if(first) {
@@ -216,9 +204,9 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
     SDL_RenderFillRect(rend, grid_cursor);
 
     TextBox t = TextBox(*grid_cursor, {0, 0, 0, 0}, {255,255,255,0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
-    t.get_text_and_rect(rend);
+    t.drawTextBox(rend);
 
-    SDL_RenderCopy(rend, t.text, NULL, &t.area);
+    SDL_RenderCopy(rend, t.text, NULL, t.getArea());
     SDL_RenderPresent(rend);
 
     fieldstoreveal--;
@@ -330,7 +318,11 @@ void Menu::useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
 }*/
 
 
-void TextBox::get_text_and_rect(SDL_Renderer *rend) {
+
+
+//----------TextBox functions----------
+
+void TextBox::drawTextBox(SDL_Renderer *rend) {
     SDL_SetRenderDrawColor(rend, area_color.r, area_color.g, area_color.b, area_color.a);
     SDL_RenderFillRect(rend, &area);
     SDL_Surface* surface = TTF_RenderText_Solid(font, name.c_str(), text_color);
@@ -338,6 +330,51 @@ void TextBox::get_text_and_rect(SDL_Renderer *rend) {
     //if(surface->h > area.h) surface->h = area.h;
     text = SDL_CreateTextureFromSurface(rend, surface);
     SDL_FreeSurface(surface);
-    SDL_RenderCopy(rend, text, NULL, &area);
+    SDL_RenderCopy(rend, text, NULL, &text_rect);
     //cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
+}
+
+SDL_Rect* TextBox::getArea() {
+    return &area;
+}
+
+bool TextBox::setAreaVar(char var, int n) {
+    switch(var) {
+        case 'x':
+            area.x = n;
+            text_rect.x = area.x+(area.w/5);
+            break;
+        case 'y':
+            area.y = n;
+            text_rect.y = area.y+(area.y/5);
+            break;
+        case 'w':
+            area.w = n;
+            text_rect.w = area.w+(area.w/5)*2;
+            break;
+        case 'h':
+            area.h = n;
+            text_rect.h = area.h+(area.h/5)*2;
+            break;
+        default:
+            cout << "wrong area variable";
+            return 0;
+    }
+    return 1;
+}
+
+int TextBox::getAreaVar(char var) {
+    switch (var) {
+        case 'x':
+            return area.x;
+        case 'y':
+            return area.y;
+        case 'w':
+            return area.w;
+        case 'h':
+            return area.h;
+        default:
+            cout << "wrong area variable";
+            return 0;
+    }
 }

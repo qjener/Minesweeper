@@ -7,8 +7,8 @@
 
     -victory and game over are not well implemented
     -cant either export or import save files
-    -menu is not working 
-    -the textbox text size must be optimized
+    -menu is not working
+    -something with the digits is wrong
 
 ## Compile and run:
 

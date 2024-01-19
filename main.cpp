@@ -35,21 +35,21 @@ int main(int argc, char** argv) {
 
     
     TextBox *menu = new TextBox(menu_area, menu_text_color, menu_area_color, "Save");
-    menu->get_text_and_rect(rend);
+    menu->drawTextBox(rend);
     
    
 
-    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
     menu->name = "Reset";
-    menu->get_text_and_rect(rend);
+    menu->drawTextBox(rend);
 
-    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
     menu->name = "Flag";
-    menu->get_text_and_rect(rend);
+    menu->drawTextBox(rend);
 
-    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
     menu->name = "Exit";
-    menu->get_text_and_rect(rend);
+    menu->drawTextBox(rend);
 
     
     SDL_Color grid_line_color = {44, 44, 44, 0}; // Dark grey
@@ -89,9 +89,21 @@ int main(int argc, char** argv) {
     SDL_bool mouse_click = SDL_FALSE;
     bool b = 1;
 
-    
+
+    SDL_Rect grid_victory = {
+        .x = GRID_CELL_SIZE*(g->getWidth()/2-2),
+        .y = GRID_CELL_SIZE*(g->getHeight()/2-1),
+        .w = GRID_CELL_SIZE*4,
+        .h = GRID_CELL_SIZE*2,
+    };
+    if(g->getWidth()%2) grid_victory.w +=(GRID_CELL_SIZE);
+    if(g->getHeight()%2) grid_victory.h +=(GRID_CELL_SIZE);
+    TextBox victory = TextBox(grid_victory, "Victory");
+
+    /*this returns the color of a specific pixel on the window, i didnt need it
+
     SDL_Surface *window_surf = SDL_GetWindowSurface( win );
-    /* this return the color of a specific pixel on the window, i didnt need it
+     
     if(!window_surf) {
         printf("%s", SDL_GetError());
         return;
@@ -133,7 +145,7 @@ int main(int argc, char** argv) {
                 break;
             }
         }
-        if(game_victory == SDL_FALSE) {
+        
         //SDL_SetRenderDrawColor(rend, grid_background.r, grid_background.g, grid_background.b, grid_background.a);
         //SDL_RenderClear(rend);
 
@@ -166,28 +178,31 @@ int main(int argc, char** argv) {
             SDL_SetRenderDrawColor(rend, grid_cursor_ghost_color.r, grid_cursor_ghost_color.g, grid_cursor_ghost_color.b, grid_cursor_ghost_color.a);
             SDL_RenderFillRect(rend, &grid_cursor_ghost);
         }*/
-
-        // clicking on the playing field
-        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
-            //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
-            if(!g->getMode()) {
-                if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                b = g->revealPos(rend, &grid_cursor);
-            } else {
-                g->flagPos(rend, &grid_cursor_color, &grid_cursor);
+        if(game_victory == SDL_FALSE) {
+            // clicking on the playing field
+            if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
+                //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
+                if(!g->getMode()) {
+                    if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+                    b = g->revealPos(rend, &grid_cursor);
+                } else {
+                    g->flagPos(rend, &grid_cursor_color, &grid_cursor);
+                }
+                //g->printGrid();
             }
-            //g->printGrid();
+
+            // clicking on the menu
+            /*if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+                g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+                g->printGrid();
+            }*/
+
+            if(!g->getFieldtoreveal()) {
+                game_victory = SDL_TRUE;                
+            }
+        }else {
+            victory.drawTextBox(rend);
         }
-
-        // clicking on the menu
-        /*if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
-            g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-            g->printGrid();
-        }*/
-
-        
-        //SDL_RenderCopy(rend, button2->text, NULL, &(button2->area));
-
         mouse_click = SDL_FALSE;
         SDL_RenderPresent(rend);
         if(quit == SDL_TRUE) {
@@ -197,20 +212,6 @@ int main(int argc, char** argv) {
             gameOver(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
             break;
         }
-        if(!g->getFieldtoreveal()) {
-
-            game_victory = SDL_TRUE;
-            cout << endl << "GOOD JOB" << endl << endl;
-            //SDL_FillRect(window_surf, &victory_screen, 0);
-            
-        }
-        }
-        if(game_victory == SDL_TRUE) {
-            SDL_RenderClear(rend);
-            victory(rend, g, window_surf);
-            
-        }
-
     }
 
     //SDL_DestroyRenderer(rend);

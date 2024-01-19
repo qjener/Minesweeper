@@ -9,6 +9,12 @@ return 0;
 
 
 #include "funcs.h"
+
+/*int main(int argc, char** argv) {
+	TextBox t = TextBox()
+}*/
+
+
 /*
 int main(int argc, char** argv) {
     Grid *g = getGrid();

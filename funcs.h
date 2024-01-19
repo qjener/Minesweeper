@@ -90,20 +90,26 @@ public:
 };
 
 class TextBox {
-public:
     SDL_Rect area, text_rect;
+public:
     SDL_Texture* text;
     SDL_Color text_color, area_color;
     string name;
     TTF_Font *font;
     
 public:
-    TextBox() : name("Button") {
+    TextBox() : name("BOX") {
         area = {
             .x = 0,
             .y = 0,
             .w = 72,
             .h = 36,
+        };
+        text_rect = {
+            .x = area.x+(area.w/5),
+            .y = area.y+(area.h/5),
+            .w = area.w-(area.w/5)*2,
+            .h = area.h-(area.h/5)*2,
         };
         area_color = {255, 255, 255, 0};
         text_color = {0, 0, 0, 0};
@@ -112,17 +118,50 @@ public:
     }
     TextBox(SDL_Rect a, string n) : area(a), name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
+        text_rect = {
+            .x = area.x+(area.w/5),
+            .y = area.y+(area.h/5),
+            .w = area.w-(area.w/5)*2,
+            .h = area.h-(area.h/5)*2,
+        };
         area_color = {255, 255, 255, 0};
         text_color = {0, 0, 0, 0};
         font = TTF_OpenFont("Times New Roman.ttf", 24);
     }
     TextBox(SDL_Rect a, SDL_Color tc, SDL_Color ac, string n) : area(a), text_color(tc), area_color(ac),name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
+        text_rect = {
+            .x = area.x+(area.w/5),
+            .y = area.y+(area.h/5),
+            .w = area.w-(area.w/5)*2,
+            .h = area.h-(area.h/5)*2,
+        };
         font = TTF_OpenFont("Times New Roman.ttf", 24);
     }
-    
 
-    void get_text_and_rect(SDL_Renderer *renderer);
+    /**
+     * @brief draws a created TextBox
+     * 
+     * @param renderer SDL_Renderer*
+     */
+    void drawTextBox(SDL_Renderer *renderer);
+    SDL_Rect* getArea();
+    /**
+     * @brief Set an Area Variable
+     * 
+     * @param var SDL_Rect.x | SDL_Rect.y | SDL_Rect.w | SDL_Rect.h
+     * @param n int
+     * @return true: var was an SDL_Rect parameter,
+     * @return false: var was not an SDL_Rect parameter
+     */
+    bool setAreaVar(char var, int n);
+    /**
+     * @brief Get an Area Variable
+     * 
+     * @param var SDL_Rect.x | SDL_Rect.y | SDL_Rect.w | SDL_Rect.h
+     * @return the selected variable of area
+     */
+    int getAreaVar(char var);
     void useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
 };
 
