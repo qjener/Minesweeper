@@ -96,8 +96,8 @@ int main(int argc, char** argv) {
         .w = GRID_CELL_SIZE*4,
         .h = GRID_CELL_SIZE*2,
     };
-    if(g->getWidth()%2) grid_victory.w +=(GRID_CELL_SIZE);
-    if(g->getHeight()%2) grid_victory.h +=(GRID_CELL_SIZE);
+    if(g->getWidth()%2) grid_victory.x +=(GRID_CELL_SIZE/2);
+    if(g->getHeight()%2) grid_victory.y +=(GRID_CELL_SIZE/2);
     TextBox victory = TextBox(grid_victory, "Victory");
 
     /*this returns the color of a specific pixel on the window, i didnt need it

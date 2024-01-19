@@ -9,6 +9,7 @@
     -cant either export or import save files
     -menu is not working
     -something with the digits is wrong
+    -einen rahmen für TextBox?
 
 ## Compile and run:
 
