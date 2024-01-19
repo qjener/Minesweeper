@@ -82,39 +82,43 @@ public:
     void buildGrids(unsigned x, unsigned y);
     bool isStart(int current, int x, int y);
     void addNumbers(int i, int j);
-    bool revealPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor);
+    bool revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor);
     void flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor);
     void saveGame();
-    bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color);
+    bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor);
     void reset(SDL_Renderer* rend);
 };
 
-class Button {
+class TextBox {
 public:
     SDL_Rect area, text_rect;
     SDL_Texture* text;
-    SDL_Color color;
+    SDL_Color text_color, area_color;
     string name;
     TTF_Font *font;
     
 public:
-    Button(SDL_Renderer* rend) : name("Button") {
+    TextBox() : name("Button") {
         area = {
             .x = 0,
             .y = 0,
             .w = 72,
             .h = 36,
         };
-        color = {255, 255, 255, 0};
-        cout << area.x << area.y << area.w << area.h << name << endl;
-        font = TTF_OpenFont("Times New Roman.ttf", 24);
-        get_text_and_rect(rend);
-        
+        area_color = {255, 255, 255, 0};
+        text_color = {0, 0, 0, 0};
+        //cout << area.x << area.y << " " << area.w << area.h << name << endl;
+        font = TTF_OpenFont("Times New Roman.ttf", 24);        
     }
-    Button(SDL_Renderer* rend, SDL_Rect a, SDL_Color c, string n) : area(a), color(c), name(n) {
-        cout << area.x << area.y << area.w << area.h << name << endl;
+    TextBox(SDL_Rect a, string n) : area(a), name(n) {
+        //cout << area.x << area.y << " " << area.w << area.h << name << endl;
+        area_color = {255, 255, 255, 0};
+        text_color = {0, 0, 0, 0};
         font = TTF_OpenFont("Times New Roman.ttf", 24);
-        get_text_and_rect(rend);
+    }
+    TextBox(SDL_Rect a, SDL_Color tc, SDL_Color ac, string n) : area(a), text_color(tc), area_color(ac),name(n) {
+        //cout << area.x << area.y << " " << area.w << area.h << name << endl;
+        font = TTF_OpenFont("Times New Roman.ttf", 24);
     }
     
 
@@ -127,5 +131,5 @@ public:
 //the description should say what the function does and what what it needs as parameter
 Grid* getGrid();
 void gameOver(int x, int y);
-void victory();
+void victory(SDL_Renderer* rend, Grid* g, SDL_Surface* win);
 bool yorN();

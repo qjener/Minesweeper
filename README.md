@@ -5,11 +5,10 @@
 
 ## To-Do:
 
-    -all icons are still missing, currently there are only colors
     -victory and game over are not well implemented
     -cant either export or import save files
     -menu is not working 
-    -the button class doesnt work
+    -the textbox text size must be optimized
 
 ## Compile and run:
 

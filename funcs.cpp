@@ -144,9 +144,9 @@ void Grid::buildGrids(unsigned x, unsigned y) {
     
 }
 
-bool Grid::revealPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
+bool Grid::revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor) {
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
-    return drawDigit(rend, grid_cursor, grid_cursor_color);
+    return drawDigit(rend, grid_cursor);
 }
 
 void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
@@ -175,8 +175,18 @@ void gameOver(int x, int y) {
     printf("\nPosition (%d,%d) killed you", x, y);
 }
 
-void victory() {
-printf("\nGOOD JOB");
+void victory(SDL_Renderer* rend,Grid* g, SDL_Surface* win) {
+    SDL_Rect victory_screen = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE*2,
+        .h = GRID_CELL_SIZE,
+        };
+    //cout << victory_screen.w << " " << victory_screen.h;
+    SDL_SetRenderDrawColor(rend, 255, 255, 255, 0);
+    SDL_RenderFillRect(rend, &victory_screen);
+    TextBox V = TextBox(victory_screen, {0,0,0}, {255,255,255}, "Victory");
+    V.get_text_and_rect(rend);
 }
 
 void Grid::saveGame() {
@@ -196,75 +206,30 @@ void Grid::saveGame() {
     printf("Your game was saved successfully");
 }
 
-bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor, SDL_Color *color) {
+bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') flags++;
     if(grid_cursor->x/GRID_CELL_SIZE < 0 || grid_cursor->y/GRID_CELL_SIZE < 0 || grid_cursor->x/GRID_CELL_SIZE >= width || grid_cursor->y/GRID_CELL_SIZE >= height) return 1;
     open[(grid_cursor->x/GRID_CELL_SIZE)+(width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
-    unsigned num = grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)];
-    switch (num) {
-        case 0: 
-            color->r = 255;
-            color->g = 255;
-            color->b = 255;
-            break;
-        case 1:
-            color->r = 239;
-            color->g = 160;
-            color->b = 166;
-            break;
-        case 2:
-            color->r = 225;
-            color->g = 104;
-            color->b = 107;
-            break;
-        case 3:
-            color->r = 208;
-            color->g =  69;
-            color->b = 75;
-            break;
-        case 4:
-            color->r = 202;
-            color->g = 31;
-            color->b = 29;
-            break;
-        case 5:
-            color->r = 172;
-            color->g = 49;
-            color->b = 54;
-            break;
-        case 6:
-            color->r = 159;
-            color->g = 17;
-            color->b = 17;
-            break;
-        case 7:
-            color->r = 112;
-            color->g = 8;
-            color->b = 8;
-            break;
-        case 8:
-            color->r = 60;
-            color->g = 5;
-            color->b = 5;
-            break;
-        case 10:
-            color->r = 15;
-            color->g = 10;
-            color->b = 222;
-            return 0;
-            break;
-    }
-    fieldstoreveal--;
-    SDL_SetRenderDrawColor(rend, color->r, color->g, color->b, 0);
+    if(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)]==10) return 0;
+
+    SDL_SetRenderDrawColor(rend, 255, 255, 255, 0);
     SDL_RenderFillRect(rend, grid_cursor);
 
-    if(num == 0) {
+    TextBox t = TextBox(*grid_cursor, {0, 0, 0, 0}, {255,255,255,0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
+    t.get_text_and_rect(rend);
+
+    SDL_RenderCopy(rend, t.text, NULL, &t.area);
+    SDL_RenderPresent(rend);
+
+    fieldstoreveal--;
+
+    if(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 0) {
         int i = grid_cursor->x - GRID_CELL_SIZE, j = grid_cursor->y - GRID_CELL_SIZE;
         for(int n = 0; n < 9; n++, i+=GRID_CELL_SIZE) {
             if(i/GRID_CELL_SIZE >= 0 && j/GRID_CELL_SIZE >= 0 && i/GRID_CELL_SIZE < width && j/GRID_CELL_SIZE < height && open[i/GRID_CELL_SIZE+width*(j/GRID_CELL_SIZE)] != 'r') {
                 grid_cursor->x = i;
                 grid_cursor->y = j;
-                drawDigit(rend, grid_cursor, color);
+                drawDigit(rend, grid_cursor);
             }
             if(n == 2 || n == 5) {
              j += GRID_CELL_SIZE;
@@ -365,21 +330,14 @@ void Menu::useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
 }*/
 
 
-void Button::get_text_and_rect(SDL_Renderer *rend) {
-    int text_width;
-    int text_height;
-    SDL_Surface *surface;
-
-    surface = TTF_RenderText_Solid(font, name.c_str(), color);
+void TextBox::get_text_and_rect(SDL_Renderer *rend) {
+    SDL_SetRenderDrawColor(rend, area_color.r, area_color.g, area_color.b, area_color.a);
+    SDL_RenderFillRect(rend, &area);
+    SDL_Surface* surface = TTF_RenderText_Solid(font, name.c_str(), text_color);
+    //if(surface->w > area.w) surface->w = area.w;
+    //if(surface->h > area.h) surface->h = area.h;
     text = SDL_CreateTextureFromSurface(rend, surface);
-    text_width = surface->w;
-    text_height = surface->h;
-
-    cout << text_width << endl << text_height;
     SDL_FreeSurface(surface);
-    text_rect.x = area.x + (area.w/2)-(text_width/2);
-    text_rect.y = area.y + (area.h/2)-(text_height/2);
-    text_rect.w = text_width;
-    text_rect.h = text_height;
-    cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
+    SDL_RenderCopy(rend, text, NULL, &area);
+    //cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
 }

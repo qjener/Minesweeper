@@ -24,20 +24,36 @@ int main(int argc, char** argv) {
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
-    SDL_Rect area = {
-        .x = GRID_CELL_SIZE*g->getWidth(),
+    SDL_Rect menu_area = {
+        .x = 0,
         .y = GRID_CELL_SIZE*g->getHeight(),
-        .w = GRID_CELL_SIZE,
-        .h = (g->getHeight()/4),
+        .w = ((g->getWidth()*GRID_CELL_SIZE)/4),
+        .h = GRID_CELL_SIZE,
     };
-    SDL_Color c = {255,255,255,0};
-    Button *button = new Button(rend, area, c, "Save");
-    //Menu* m = new Menu(g, rend);
+    SDL_Color menu_text_color = {0,0,0,0};
+    SDL_Color menu_area_color = {255,255,255,0};
 
-    //SDL_Color grid_background = {22, 22, 22, 255}; // Barely Black
-    SDL_Color grid_line_color = {44, 44, 44, 255}; // Dark grey
+    
+    TextBox *menu = new TextBox(menu_area, menu_text_color, menu_area_color, "Save");
+    menu->get_text_and_rect(rend);
+    
+   
+
+    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->name = "Reset";
+    menu->get_text_and_rect(rend);
+
+    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->name = "Flag";
+    menu->get_text_and_rect(rend);
+
+    menu->area.x += (g->getWidth()*GRID_CELL_SIZE)/4;
+    menu->name = "Exit";
+    menu->get_text_and_rect(rend);
+
+    
+    SDL_Color grid_line_color = {44, 44, 44, 0}; // Dark grey
     //SDL_Color grid_cursor_ghost_color = {44, 44, 44, 255};
-    SDL_Color grid_cursor_color = {255, 255, 255, 255}; // White
     //SDL_Color grid_menu_color = {255, 255, 255, 255}; // White
 
     /*
@@ -47,23 +63,35 @@ int main(int argc, char** argv) {
         GRID_CELL_SIZE, GRID_CELL_SIZE
     };*/
 
+    SDL_Rect grid_backround = {
+        .x = 0,
+        .y = 0,
+        .w = g->getWidth()*GRID_CELL_SIZE,
+        .h = g->getHeight()*GRID_CELL_SIZE,
+    };
+    SDL_Color grid_background = {22, 22, 22, 255}; // Barely Black
+    SDL_SetRenderDrawColor(rend, grid_background.r, grid_background.g, grid_background.b, grid_background.a);
+    SDL_RenderFillRect(rend, &grid_backround);
+
     SDL_Rect grid_cursor = {
         .x = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
         .y = (g->getWidth() - 1) / 2 * GRID_CELL_SIZE,
         .w = GRID_CELL_SIZE,
         .h = GRID_CELL_SIZE,
     };
+    SDL_Color grid_cursor_color = {255, 255, 255, 0}; // White
 
     SDL_bool quit = SDL_FALSE; 
     SDL_bool mouse_active = SDL_FALSE;
     SDL_bool mouse_hover = SDL_FALSE;
     //SDL_bool defeat = SDL_FALSE;
-    //SDL_bool victory = SDL_FALSE;
+    SDL_bool game_victory = SDL_FALSE;
     SDL_bool mouse_click = SDL_FALSE;
     bool b = 1;
 
-    /* this return the color of a specific pixel on the window, i didnt need it
+    
     SDL_Surface *window_surf = SDL_GetWindowSurface( win );
+    /* this return the color of a specific pixel on the window, i didnt need it
     if(!window_surf) {
         printf("%s", SDL_GetError());
         return;
@@ -78,6 +106,7 @@ int main(int argc, char** argv) {
     */
 
     while (!quit) {
+        SDL_SetWindowAlwaysOnTop(win, SDL_FALSE);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
@@ -104,7 +133,7 @@ int main(int argc, char** argv) {
                 break;
             }
         }
-
+        if(game_victory == SDL_FALSE) {
         //SDL_SetRenderDrawColor(rend, grid_background.r, grid_background.g, grid_background.b, grid_background.a);
         //SDL_RenderClear(rend);
 
@@ -119,6 +148,11 @@ int main(int argc, char** argv) {
             SDL_RenderDrawLine(rend, 0, i, window_width, i);
         }
 
+        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4), g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4), g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*3, g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*3, g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
+        
+        
         //g->setMenu(rend, &grid_menu_color, &grid_menu);
 /*
         SDL_SetRenderDrawColor(rend, 0, 0, 0, 130);
@@ -138,11 +172,11 @@ int main(int argc, char** argv) {
             //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
             if(!g->getMode()) {
                 if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                b = g->revealPos(rend, &grid_cursor_color, &grid_cursor);
+                b = g->revealPos(rend, &grid_cursor);
             } else {
                 g->flagPos(rend, &grid_cursor_color, &grid_cursor);
             }
-            g->printGrid();
+            //g->printGrid();
         }
 
         // clicking on the menu
@@ -151,7 +185,8 @@ int main(int argc, char** argv) {
             g->printGrid();
         }*/
 
-        SDL_RenderCopy(rend, button->text, NULL, &(button->area));
+        
+        //SDL_RenderCopy(rend, button2->text, NULL, &(button2->area));
 
         mouse_click = SDL_FALSE;
         SDL_RenderPresent(rend);
@@ -162,7 +197,20 @@ int main(int argc, char** argv) {
             gameOver(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
             break;
         }
-        if(!g->getFieldtoreveal()) victory();
+        if(!g->getFieldtoreveal()) {
+
+            game_victory = SDL_TRUE;
+            cout << endl << "GOOD JOB" << endl << endl;
+            //SDL_FillRect(window_surf, &victory_screen, 0);
+            
+        }
+        }
+        if(game_victory == SDL_TRUE) {
+            SDL_RenderClear(rend);
+            victory(rend, g, window_surf);
+            
+        }
+
     }
 
     //SDL_DestroyRenderer(rend);
