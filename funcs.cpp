@@ -15,46 +15,15 @@ bool yorN() {
     }
 }
 
-void Grid::printHidden() {
-    printf("%d\n%d\n%d\n", width, height, nmines);
-    printf("\n   ");
-    for(int i = 1; i <= width; i++) {
-        if(i < 10) printf("%d  ", i);
-        else printf("%d ", i);
+void useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
+    if(x < g->getWidth()/4) g->saveGame();
+    else if(x < g->getWidth()/2) reset(rend, g);
+    else if(x < (g->getWidth()/4)*3) {                   //mode switch
+        if(!g->getMode())g->setMode(1);
+        else g->setMode(0);
     }
-    printf("\n");
-    for(int y = 0; y < height; y++) {
-        if(y+1 < 10) printf("%d  ", y+1);
-        else printf("%d ", y+1);
-        for(int x = 0; x < width; x++) {
-            if(grid[x+(width*y)] == 10) {
-                printf("10 ");                            //•
-            }
-            else printf("%u  ", grid[x+(width*y)]);
-        }
-        printf("\n");
-    }
-}
-
-void Grid::printGrid() {
-    printHidden();
-    printf("\n\n   ");
-        for(int i = 1; i <= width; i++) {
-            if(i < 10) printf("%d  ", i);
-            else printf("%d ", i);
-        }
-        printf("\n");
-        for(int y = 0; y < height; y++) {
-            if(y+1 < 10) printf("%d  ", y+1);
-            else printf("%d ", y+1);
-            for(int x = 0; x < width; x++) {
-                if(open[x+width*y] == 'x') printf("x  ");
-                else if(open[x+width*y] == 'f') printf("f  ");
-                else printf("%c  ", open[x+width*y]);
-            }
-            printf("\n");
-        }
-        printf("Flags: %u\n", flags);
+    else if(x < g->getWidth()) {exit(1);}
+    return;
 }
 
 Grid* getGrid() {
@@ -98,6 +67,81 @@ Grid* getGrid() {
     }else {
         return new Grid();
     }
+}
+
+void cleanGrid(SDL_Renderer* rend, Grid* g) {
+    SDL_Rect cell = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+    SDL_Color cell_color = {90,90,90};
+    Box Cell = Box(cell, cell_color, cell_color, " ");
+    Cell.border_color = {180, 180, 180};
+
+    for(int i = 0; i < g->getWidth(); i++) {
+        for(int j = 0; j < g->getHeight(); j++) {
+            Cell.drawBox(rend);
+            Cell.setAreaVar('y', Cell.getAreaVar('y')+GRID_CELL_SIZE);
+        }
+        Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
+        Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
+    }
+}
+
+void gameOver(int x, int y) {
+    printf("\nPosition (%d,%d) killed you", x, y);
+}
+
+void reset(SDL_Renderer* rend, Grid* g) {
+    cleanGrid(rend, g);
+    //g = getGrid();
+}
+
+
+//----------Grid functions----------
+
+void Grid::printHidden() {
+    printf("%d\n%d\n%d\n", width, height, nmines);
+    printf("\n   ");
+    for(int i = 1; i <= width; i++) {
+        if(i < 10) printf("%d  ", i);
+        else printf("%d ", i);
+    }
+    printf("\n");
+    for(int y = 0; y < height; y++) {
+        if(y+1 < 10) printf("%d  ", y+1);
+        else printf("%d ", y+1);
+        for(int x = 0; x < width; x++) {
+            if(grid[x+(width*y)] == 10) {
+                printf("10 ");                            //•
+            }
+            else printf("%u  ", grid[x+(width*y)]);
+        }
+        printf("\n");
+    }
+}
+
+void Grid::printGrid() {
+    printHidden();
+    printf("\n\n   ");
+        for(int i = 1; i <= width; i++) {
+            if(i < 10) printf("%d  ", i);
+            else printf("%d ", i);
+        }
+        printf("\n");
+        for(int y = 0; y < height; y++) {
+            if(y+1 < 10) printf("%d  ", y+1);
+            else printf("%d ", y+1);
+            for(int x = 0; x < width; x++) {
+                if(open[x+width*y] == 'x') printf("x  ");
+                else if(open[x+width*y] == 'f') printf("f  ");
+                else printf("%c  ", open[x+width*y]);
+            }
+            printf("\n");
+        }
+        printf("Flags: %u\n", flags);
 }
 
 bool Grid::isStart(int current, int x, int y) {
@@ -144,17 +188,27 @@ void Grid::buildGrids(unsigned x, unsigned y) {
     
 }
 
-bool Grid::revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor) {
-    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return 1;
-    return drawDigit(rend, grid_cursor);
+SDL_bool Grid::revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor) {
+    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f' || open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'r') return SDL_FALSE;
+    bool b = drawDigit(rend, grid_cursor);
+    if(b) return SDL_FALSE;
+    else return SDL_TRUE;
 }
 
 void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
         open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';
         flags++;
-        SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
-        SDL_RenderFillRect(rend, grid_cursor);
+        SDL_Rect cell = {
+        .x = grid_cursor->x,
+        .y = grid_cursor->y,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+        };
+        SDL_Color cell_color = {90,90,90};
+        Box Cell = Box(cell, cell_color, cell_color, "");
+        Cell.border_color = {180, 180, 180};
+        Cell.drawBox(rend);
         return;
     }
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] != 'x') {                                        //return if already revealed
@@ -163,19 +217,22 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
     if(flags <= 0) {                                                                                         //return if no flags left
         return;
     }
+    SDL_Rect flag = {
+        .x = grid_cursor->x,
+        .y = grid_cursor->y,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+    SDL_Color cell_color = {90,90,90};
+    Box Flag = Box(flag, cell_color, cell_color, "F");
+    Flag.text_color = {255, 0, 0};
+    Flag.border_color = {180, 180, 180};
+    Flag.drawBox(rend);
                                                                                                                 //execute putting in flag (green)
-    SDL_SetRenderDrawColor(rend, 46, 204, 113, 0);
-    SDL_RenderFillRect(rend, grid_cursor);
     open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'f';
     flags--;
     return;
 }
-
-void gameOver(int x, int y) {
-    printf("\nPosition (%d,%d) killed you", x, y);
-}
-
-//void victory(SDL_Renderer* rend,Grid* g, SDL_Surface* win){}
 
 void Grid::saveGame() {
     if(first) {
@@ -200,13 +257,11 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
     open[(grid_cursor->x/GRID_CELL_SIZE)+(width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
     if(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)]==10) return 0;
 
-    SDL_SetRenderDrawColor(rend, 255, 255, 255, 0);
-    SDL_RenderFillRect(rend, grid_cursor);
-
-    TextBox t = TextBox(*grid_cursor, {0, 0, 0, 0}, {255,255,255,0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
-    t.drawTextBox(rend);
-
-    SDL_RenderCopy(rend, t.text, NULL, t.getArea());
+    Box t = Box(*grid_cursor, {0, 0, 0, 0}, {255,255,255,0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
+    t.border_color = {};
+    t.border_thickness = 0;
+    t.area_color = {80,80,80};
+    t.drawBox(rend);
     SDL_RenderPresent(rend);
 
     fieldstoreveal--;
@@ -228,103 +283,24 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
     return 1;
 }
 
-/*void Grid::setMenu(SDL_Renderer *rend, SDL_Color *grid_menu_color, SDL_Rect *grid_menu) {
-    SDL_SetRenderDrawColor(rend, grid_menu_color->r, grid_menu_color->g, grid_menu_color->b, 0);
-    for (int i = 0; i < 4; i ++) {
-        if(i == 3) grid_menu->w -= 4;
 
-        SDL_RenderFillRect(rend, grid_menu);
-        grid_menu->x += GRID_CELL_SIZE*(width/4);
-        if(i == 3) {
-            grid_menu->w = GRID_CELL_SIZE * (width/4)-4;
-            grid_menu->x = 4;
-        }
-    }
-}*/
+//----------Box functions----------
 
-void Grid::reset(SDL_Renderer* rend) {
-    SDL_Rect grid_resetter = {
-        .x = 0,
-        .y = 0,
-        .w = GRID_CELL_SIZE * width,
-        .h = GRID_CELL_SIZE * height,
-    };
-    SDL_SetRenderDrawColor(rend, 0, 0, 0, 0);
-    SDL_RenderFillRect(rend, &grid_resetter);
-    printf("\n\nParameters resetting to default...\n\nDo you want to set your own parameters? (Y/n)\n");
-    unsigned w, h, m;
-    if(yorN()) {
-        while(1) {
-            printf("Width: ");
-            scanf("%u", &w);
-            printf("Height: ");
-            scanf("%u", &h);
-            if(w*h > GRID_SIZE) {
-                printf("Chosen playingfield is too big - pls set a smaller one\n");
-                continue;
-            }
-            printf("Number of mines: ");
-            scanf("%u", &m);
-            if(m > w*h) {
-                printf("Too many mines - pls select less than %u (this is depended on your chosen field size)\n", w*h);
-                continue;
-            }
-            break;
-        }
-        if(w == 16 && h == 16 && m == 40) {
-            printf("\nvery original\n");
-        }
-        getchar();
-        width = w;
-        height = h;
-        nmines = m;
-        fieldstoreveal = width*height-nmines;
-        flags = nmines;
-        first = true;
-        mode = 0;
-        for(int j = 0; j < height; j++) {
-            for(int i = 0; i < width; i++) {
-                grid[i+width*j] = 0;
-                open[i+width*j] = 'x';
-            }
-        }
-    }else {
-        width = 16;
-        height = 16;
-        nmines = 40;
-        fieldstoreveal = width*height-nmines;
-        flags = nmines;
-        first = true;
-        mode = 0;
-        for(int j = 0; j < height; j++) {
-            for(int i = 0; i < width; i++) {
-                grid[i+width*j] = 0;
-                open[i+width*j] = 'x';
-            }
-        }
-    }
-}
-
-/*
-void Menu::useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
-    if(x < g->getWidth()/4) g->saveGame();
-    else if(x < g->getWidth()/2) g->reset(rend);
-    else if(x < (g->getWidth()/4)*3) {                   //mode switch
-        if(!g->getMode())g->setMode(1);
-        else g->setMode(0);
-    }
-    else if(x < g->getWidth()) {exit(1);}
-    return;
-}*/
-
-
-
-
-//----------TextBox functions----------
-
-void TextBox::drawTextBox(SDL_Renderer *rend) {
+void Box::drawBox(SDL_Renderer *rend) {
     SDL_SetRenderDrawColor(rend, area_color.r, area_color.g, area_color.b, area_color.a);
     SDL_RenderFillRect(rend, &area);
+
+    SDL_SetRenderDrawColor(rend, border_color.r, border_color.g, border_color.b, border_color.a);
+    for(int i = 0; i <= border_thickness; i++) {
+        SDL_RenderDrawLine(rend, area.x+i, area.y, area.x+i, area.y+area.h);
+        SDL_RenderDrawLine(rend, area.x+area.w-i, area.y, area.x+area.w-i, area.y+area.h);
+
+        SDL_RenderDrawLine(rend, area.x, area.y+i, area.x+area.w, area.y+i);
+        SDL_RenderDrawLine(rend, area.x, area.y+area.h-i, area.x+area.w, area.y+area.h-i);
+    }
+    //SDL_RenderDrawLine(rend, i, 0, i, window_height);
+    //SDL_RenderDrawLine(rend, 0, i, window_width, i);
+
     SDL_Surface* surface = TTF_RenderText_Solid(font, name.c_str(), text_color);
     //if(surface->w > area.w) surface->w = area.w;
     //if(surface->h > area.h) surface->h = area.h;
@@ -334,11 +310,11 @@ void TextBox::drawTextBox(SDL_Renderer *rend) {
     //cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
 }
 
-SDL_Rect* TextBox::getArea() {
+SDL_Rect* Box::getArea() {
     return &area;
 }
 
-bool TextBox::setAreaVar(char var, int n) {
+bool Box::setAreaVar(char var, int n) {
     switch(var) {
         case 'x':
             area.x = n;
@@ -363,7 +339,7 @@ bool TextBox::setAreaVar(char var, int n) {
     return 1;
 }
 
-int TextBox::getAreaVar(char var) {
+int Box::getAreaVar(char var) {
     switch (var) {
         case 'x':
             return area.x;

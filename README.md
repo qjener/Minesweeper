@@ -5,11 +5,10 @@
 
 ## To-Do:
 
-    -victory and game over are not well implemented
     -cant either export or import save files
-    -menu is not working
-    -something with the digits is wrong
-    -einen rahmen für TextBox?
+    -restart doesnt work
+    -text in boxes has to be optimized
+    -maybe instead of exit set parameters or put it into reset?
 
 ## Compile and run:
 

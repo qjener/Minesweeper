@@ -76,29 +76,28 @@ public:
         mode = m;
     }
 
-
     void printHidden();
     void printGrid();
     void buildGrids(unsigned x, unsigned y);
     bool isStart(int current, int x, int y);
     void addNumbers(int i, int j);
-    bool revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor);
+    SDL_bool revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor);
     void flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor);
     void saveGame();
     bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor);
-    void reset(SDL_Renderer* rend);
 };
 
-class TextBox {
+class Box {
     SDL_Rect area, text_rect;
 public:
     SDL_Texture* text;
-    SDL_Color text_color, area_color;
+    SDL_Color text_color, area_color, border_color;
+    int border_thickness;
     string name;
     TTF_Font *font;
     
 public:
-    TextBox() : name("BOX") {
+    Box() : name("BOX") {
         area = {
             .x = 0,
             .y = 0,
@@ -113,10 +112,12 @@ public:
         };
         area_color = {255, 255, 255, 0};
         text_color = {0, 0, 0, 0};
+        border_color = {0, 0, 0, 0};
+        border_thickness = 5;
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
-        font = TTF_OpenFont("Times New Roman.ttf", 24);        
+        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);        
     }
-    TextBox(SDL_Rect a, string n) : area(a), name(n) {
+    Box(SDL_Rect a, string n) : area(a), name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
         text_rect = {
             .x = area.x+(area.w/5),
@@ -126,9 +127,11 @@ public:
         };
         area_color = {255, 255, 255, 0};
         text_color = {0, 0, 0, 0};
-        font = TTF_OpenFont("Times New Roman.ttf", 24);
+        border_color = {0, 0, 0, 0};
+        border_thickness = 5;
+        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);
     }
-    TextBox(SDL_Rect a, SDL_Color tc, SDL_Color ac, string n) : area(a), text_color(tc), area_color(ac),name(n) {
+    Box(SDL_Rect a, SDL_Color tc, SDL_Color ac, string n) : area(a), text_color(tc), area_color(ac),name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
         text_rect = {
             .x = area.x+(area.w/5),
@@ -136,15 +139,17 @@ public:
             .w = area.w-(area.w/5)*2,
             .h = area.h-(area.h/5)*2,
         };
-        font = TTF_OpenFont("Times New Roman.ttf", 24);
+        border_color = {0, 0, 0, 0};
+        border_thickness = 5;
+        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);
     }
 
     /**
-     * @brief draws a created TextBox
+     * @brief draws a created Box
      * 
      * @param renderer SDL_Renderer*
      */
-    void drawTextBox(SDL_Renderer *renderer);
+    void drawBox(SDL_Renderer *renderer);
     SDL_Rect* getArea();
     /**
      * @brief Set an Area Variable
@@ -162,9 +167,8 @@ public:
      * @return the selected variable of area
      */
     int getAreaVar(char var);
-    void useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
+    
 };
-
 
 //if you comment a function like this you can alway see their description when hovering them anywhere
 //the description should say what the function does and what what it needs as parameter
@@ -172,3 +176,6 @@ Grid* getGrid();
 void gameOver(int x, int y);
 void victory(SDL_Renderer* rend, Grid* g, SDL_Surface* win);
 bool yorN();
+void useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
+void cleanGrid(SDL_Renderer* rend, Grid* g);
+void reset(SDL_Renderer* rend, Grid* g);

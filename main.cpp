@@ -1,6 +1,5 @@
 #include "funcs.h"
 
-
 int main(int argc, char** argv) {
     if(SDL_Init(SDL_INIT_VIDEO) != 0) {
         cout << "Error initializing SDL: " << SDL_GetError() << endl;
@@ -13,13 +12,13 @@ int main(int argc, char** argv) {
     
     Grid *g = getGrid();
     
-    int window_width = (g->getWidth() * GRID_CELL_SIZE) + 1;
-    int window_height = (g->getWidth() * GRID_CELL_SIZE) + 1;
+    //int window_width = (g->getWidth() * GRID_CELL_SIZE) + 1;
+    //int window_height = (g->getWidth() * GRID_CELL_SIZE) + 1;
 
     SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
-                                    g->getWidth()*GRID_CELL_SIZE, (1+g->getWidth())*GRID_CELL_SIZE, 0);
+                                    g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE, 0);
     SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
@@ -34,27 +33,33 @@ int main(int argc, char** argv) {
     SDL_Color menu_area_color = {255,255,255,0};
 
     
-    TextBox *menu = new TextBox(menu_area, menu_text_color, menu_area_color, "Save");
-    menu->drawTextBox(rend);
+    Box *menu = new Box(menu_area, menu_text_color, menu_area_color, "Save");
+    menu->border_thickness = 4;
+    menu->border_color = {90, 90, 90};
+    menu->drawBox(rend);
     
-   
-
     menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Reset";
-    menu->drawTextBox(rend);
+    menu->name = "Restart";
+    menu->drawBox(rend);
 
     menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
     menu->name = "Flag";
-    menu->drawTextBox(rend);
+    menu->drawBox(rend);
 
     menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
     menu->name = "Exit";
-    menu->drawTextBox(rend);
+    menu->drawBox(rend);
 
     
+
     SDL_Color grid_line_color = {44, 44, 44, 0}; // Dark grey
     //SDL_Color grid_cursor_ghost_color = {44, 44, 44, 255};
     //SDL_Color grid_menu_color = {255, 255, 255, 255}; // White
+
+    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+    SDL_RenderDrawLine(rend, (g->getWidth()*GRID_CELL_SIZE)/4, (g->getHeight())*GRID_CELL_SIZE, (g->getWidth()*GRID_CELL_SIZE)/4, (1+g->getHeight())*GRID_CELL_SIZE);
+    SDL_RenderDrawLine(rend, (g->getWidth()*GRID_CELL_SIZE)/2, (g->getHeight())*GRID_CELL_SIZE, (g->getWidth()*GRID_CELL_SIZE)/2, (1+g->getHeight())*GRID_CELL_SIZE);
+    SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, (g->getHeight())*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, (1+g->getHeight())*GRID_CELL_SIZE);
 
     /*
     SDL_Rect grid_cursor_ghost = {
@@ -84,21 +89,22 @@ int main(int argc, char** argv) {
     SDL_bool quit = SDL_FALSE; 
     SDL_bool mouse_active = SDL_FALSE;
     SDL_bool mouse_hover = SDL_FALSE;
-    //SDL_bool defeat = SDL_FALSE;
+    SDL_bool defeat = SDL_FALSE;
     SDL_bool game_victory = SDL_FALSE;
     SDL_bool mouse_click = SDL_FALSE;
-    bool b = 1;
 
 
-    SDL_Rect grid_victory = {
-        .x = GRID_CELL_SIZE*(g->getWidth()/2-2),
-        .y = GRID_CELL_SIZE*(g->getHeight()/2-1),
+    SDL_Rect game_end = {
+        .x = GRID_CELL_SIZE*((g->getWidth()/2)-2),
+        .y = GRID_CELL_SIZE*((g->getHeight()/2)-1),
         .w = GRID_CELL_SIZE*4,
         .h = GRID_CELL_SIZE*2,
     };
-    if(g->getWidth()%2) grid_victory.x +=(GRID_CELL_SIZE/2);
-    if(g->getHeight()%2) grid_victory.y +=(GRID_CELL_SIZE/2);
-    TextBox victory = TextBox(grid_victory, "Victory");
+    if(g->getWidth()%2) game_end.x +=(GRID_CELL_SIZE/2);
+    if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
+    Box end = Box(game_end, "End");
+
+    cleanGrid(rend, g);
 
     /*this returns the color of a specific pixel on the window, i didnt need it
 
@@ -153,38 +159,27 @@ int main(int argc, char** argv) {
         SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
 
         for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-            SDL_RenderDrawLine(rend, i, 0, i, window_height);
+            SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
         }
 
-        for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-            SDL_RenderDrawLine(rend, 0, i, window_width, i);
+        for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+            SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
         }
 
-        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4), g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4), g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
-        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
-        SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*3, g->getHeight()*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*3, g->getHeight()*GRID_CELL_SIZE+GRID_CELL_SIZE);
-        
-        
-        //g->setMenu(rend, &grid_menu_color, &grid_menu);
-/*
-        SDL_SetRenderDrawColor(rend, 0, 0, 0, 130);
-
-        for (int i = 0; i < 1 + (g->getWidth() * GRID_CELL_SIZE)/4; i += GRID_CELL_SIZE*(g->getWidth()/4)) {
-            SDL_RenderDrawLine(rend, i, g->getHeight() *GRID_CELL_SIZE, i, window_height);
-        }*/
+        SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
 
         // Draw grid ghost cursor.
         /*if (mouse_active && mouse_click) {
             SDL_SetRenderDrawColor(rend, grid_cursor_ghost_color.r, grid_cursor_ghost_color.g, grid_cursor_ghost_color.b, grid_cursor_ghost_color.a);
             SDL_RenderFillRect(rend, &grid_cursor_ghost);
         }*/
-        if(game_victory == SDL_FALSE) {
+        if(game_victory == SDL_FALSE && defeat == SDL_FALSE) {
             // clicking on the playing field
             if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
                 //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
                 if(!g->getMode()) {
                     if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                    b = g->revealPos(rend, &grid_cursor);
+                    defeat = g->revealPos(rend, &grid_cursor);
                 } else {
                     g->flagPos(rend, &grid_cursor_color, &grid_cursor);
                 }
@@ -192,25 +187,24 @@ int main(int argc, char** argv) {
             }
 
             // clicking on the menu
-            /*if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
-                g->useMenu(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                g->printGrid();
-            }*/
+            if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+                useMenu(rend, g, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+            }
 
             if(!g->getFieldtoreveal()) {
                 game_victory = SDL_TRUE;                
             }
+        }else if(game_victory == SDL_TRUE) {
+            end.name = "VICTORY";
+            end.drawBox(rend);
         }else {
-            victory.drawTextBox(rend);
+            end.name = "GAME OVER";
+            end.drawBox(rend);
         }
         mouse_click = SDL_FALSE;
         SDL_RenderPresent(rend);
         if(quit == SDL_TRUE) {
             SDL_Quit();
-        }
-        if(!b) {
-            gameOver(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-            break;
         }
     }
 
