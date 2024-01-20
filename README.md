@@ -9,6 +9,7 @@
     -restart doesnt work
     -text in boxes has to be optimized
     -maybe instead of exit set parameters or put it into reset?
+    -game over needs to reveal mines
 
 ## Compile and run:
 
