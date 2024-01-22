@@ -8,7 +8,8 @@
     -text in boxes has to be optimized
     -set size cant ask for params
     -game over needs to reveal mines
-    -flags have to have other symbols
+    -flags have to have other symbols->flagimg has to be implemented
+    -saving from a change window size doesnt really work(menu chooses wrong)
 
 ## Compile and run:
 

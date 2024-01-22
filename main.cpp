@@ -9,7 +9,10 @@ int main(int argc, char** argv) {
 	    cout << "Error initializing SDL_ttf: " << TTF_GetError() << endl;
         return 0;
     }
-
+    if ( IMG_Init(IMG_INIT_PNG) < 0 ) {
+	    cout << "Error initializing SDL_ttf: " << TTF_GetError() << endl;
+        return 0;
+    }
     
     SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
                                     SDL_WINDOWPOS_CENTERED,
@@ -18,6 +21,8 @@ int main(int argc, char** argv) {
     SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
+
+    SDL_Texture* flagimg = IMG_LoadTexture(rend, "flag.png");
 
     Grid *g = new Grid();
     
@@ -118,6 +123,7 @@ int main(int argc, char** argv) {
     while (!quit) {
         //SDL_SetWindowAlwaysOnTop(win, SDL_FALSE);
         SDL_Event event;
+        
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_MOUSEBUTTONDOWN:
@@ -170,7 +176,7 @@ int main(int argc, char** argv) {
                 }
                 game_defeat = g->revealPos(rend, &grid_cursor);
             } else {
-                g->flagPos(rend, &grid_cursor_color, &grid_cursor);
+                g->flagPos(rend, &grid_cursor_color, &grid_cursor, flagimg);
             }
         }
 
@@ -189,10 +195,28 @@ int main(int argc, char** argv) {
         }
 
         if(game_victory == SDL_TRUE) {
+            game_end = {
+                .x = GRID_CELL_SIZE*((g->getWidth()/2)-2),
+                .y = GRID_CELL_SIZE*((g->getHeight()/2)-1),
+                .w = GRID_CELL_SIZE*4,
+                .h = GRID_CELL_SIZE*2,
+            };
+            if(g->getWidth()%2) game_end.x +=(GRID_CELL_SIZE/2);
+            if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
+            end = Box(game_end, "End");
             end.name = "VICTORY";
             end.drawBox(rend);
         }
         if(game_defeat == SDL_TRUE) {
+            game_end = {
+                .x = GRID_CELL_SIZE*((g->getWidth()/2)-2),
+                .y = GRID_CELL_SIZE*((g->getHeight()/2)-1),
+                .w = GRID_CELL_SIZE*4,
+                .h = GRID_CELL_SIZE*2,
+            };
+            if(g->getWidth()%2) game_end.x +=(GRID_CELL_SIZE/2);
+            if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
+            end = Box(game_end, "End");
             end.name = "GAME OVER";
             end.drawBox(rend);
         }
@@ -212,6 +236,7 @@ int main(int argc, char** argv) {
                     game_victory = SDL_FALSE;
                     break;
                 case 3:
+                    //cout << "save ";
                     if(g->getFirst()) {
                         Menu_Msg.name = "You cant save an unloaded game"; // - please start playing first
                         Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*8);
@@ -243,6 +268,7 @@ int main(int argc, char** argv) {
                     }
                     break;
                 case 4:
+                    //cout << "load";
                     if(!access("save.bin", F_OK)) {
                         //if(yorN(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE, "Save file detected - do you want to continue your game?")) {
                             g = loadGame(rend);

@@ -41,11 +41,16 @@ bool yorN(SDL_Renderer* rend, int w, int h, string question) {
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
     if(x < g->getWidth()/4) {                                       //flags on
         return 1;
-    }else if(x < g->getWidth()/2) {                                 //restart
+    }
+    if(x < g->getWidth()/2) {                                 //restart
         return 2;
-    }else if(x < (g->getWidth()/4)*3) {                             //save game
+    }
+    if(x < (g->getWidth()/4)*3) {                             //save game
+        //cout << g->getWidth() << " " << (g->getWidth()/4)*3;
         return 3;
-    }else if(x < g->getWidth()) {                                   //load game
+    }
+    if(x < g->getWidth()) {                                   //load game
+        //cout << g->getWidth() << " " << (g->getWidth()/4)*3;
         return 4;
     }
     return 0;
@@ -252,7 +257,7 @@ SDL_bool Grid::revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor) {
     else return SDL_TRUE;
 }
 
-void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
+void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor, SDL_Texture* flagimg) {
     SDL_Color grid_line_color = {44, 44, 44, 0};
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
         open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';

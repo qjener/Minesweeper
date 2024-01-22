@@ -4,6 +4,7 @@
 #include <vector>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <iostream>
 #include <string>
 
@@ -99,7 +100,7 @@ public:
     bool isStart(int current, int x, int y);
     void addNumbers(int i, int j);
     SDL_bool revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor);
-    void flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor);
+    void flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor, SDL_Texture* flagimg);
     void saveGame();
     bool drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor);
 };

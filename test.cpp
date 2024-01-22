@@ -7,13 +7,55 @@ int main(int argc, char** argv) {
 return 0;
 }*/
 
-
+/*
 #include "funcs.h"
 
-/*int main(int argc, char** argv) {
-	TextBox t = TextBox()
-}*/
+int main(int argc, char** argv) {
+	SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
+                                    SDL_WINDOWPOS_CENTERED,
+                                    SDL_WINDOWPOS_CENTERED,
+                                    500, 500, 0);
+    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
+    SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
+	SDL_Texture* t;
+	t = IMG_LoadTexture(rend, "flag.png");
+	int w = 500;
+	SDL_RenderCopy(rend, t, NULL, NULL);
+	SDL_RenderPresent(rend);
 
+	while(1) {
+       SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_MOUSEBUTTONDOWN:
+                break;
+                case SDL_QUIT:
+                exit(1);
+            }
+        }
+
+        //SDL_SetRenderDrawColor( rend, 255, 255, 255, 255 );
+	    //SDL_RenderClear( rend );
+
+        //SDL_RenderCopy(rend, texture, NULL, NULL);
+
+        //surface = TTF_RenderText_Solid(font, s.c_str(), {255,255,255,255}); //SDL_CreateRGBSurface(0, area.w, area.h, 32, 0, 0, 0, 0);
+        
+        //text = SDL_CreateTextureFromSurface(rend, surface);
+
+        //area.x = 320 - (surface->w / 2.0f);
+		//area.y = 240;
+		//area.w = surface->w;
+		//area.h = surface->h;
+		//SDL_RenderCopy(rend, text, NULL, &area);
+
+		SDL_DestroyTexture(t);
+		//SDL_FreeSurface(surface);
+
+        SDL_RenderPresent( rend );
+    }
+}
+*/
 
 /*
 int main(int argc, char** argv) {
