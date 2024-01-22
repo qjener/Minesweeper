@@ -6,7 +6,7 @@
 ## To-Do:
 
     -text in boxes has to be optimized
-    -set size cant create a new 
+    -set size cant ask for params
     -game over needs to reveal mines
     -flags have to have other symbols
 
