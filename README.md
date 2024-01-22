@@ -5,10 +5,10 @@
 
 ## To-Do:
 
-    -save files dont work
     -text in boxes has to be optimized
     -maybe instead of exit set parameters or put it into flags?
     -game over needs to reveal mines
+    -flags have to have other symbols
 
 ## Compile and run:
 

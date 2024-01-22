@@ -38,45 +38,6 @@ bool yorN(SDL_Renderer* rend, int w, int h, string question) {
     return 0;
 }
 
-Grid* loadGame(SDL_Renderer* rend) {
-    Grid helper;
-    FILE* save;
-    //if (!access("save.bin", F_OK)) {
-      //  if(yorN(rend, ww, wh, "Save file detected - do you want to continue your game?")) {
-    save = fopen("save.bin", "rb");
-    fread(&helper, sizeof(Grid), 1, save);
-    fclose(save);
-    helper.printGrid();
-    return new Grid(helper);
-}
-
-/*
-    unsigned w, h, m;
-    if(yorN(rend, ww, wh, "Save file detected - do you want to continue your game?")) {
-        while(1) {
-            printf("Width: ");
-            scanf("%u", &w);
-            printf("Height: ");
-            scanf("%u", &h);
-            if(w*h > GRID_SIZE) {
-                printf("Chosen playingfield is too big - pls set a smaller one\n");
-                continue;
-            }
-            printf("Number of mines: ");
-            scanf("%u", &m);
-            if(m > w*h) {
-                printf("Too many mines - pls select less than %u (this is depended on your chosen field size)\n", w*h);
-                continue;
-            }
-            break;
-        }
-        if(w == 16 && h == 16 && m == 40) {
-            printf("\nvery original\n");
-        }
-        getchar();
-        //return new Grid(w, h, m);
-    }*/
-
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
     if(x < g->getWidth()/4) {                                       //flags on
         return 1;
@@ -136,6 +97,8 @@ void reloadGrid(SDL_Renderer* rend, Grid* g) {
     for(int i = 0; i < g->getWidth(); i++) {
         for(int j = 0; j < g->getHeight(); j++) {
             if(g->getOpenPos(i,j) == 'r') {
+                cell.x = i*GRID_CELL_SIZE;
+                cell.y = j*GRID_CELL_SIZE;
                 g->drawDigit(rend, &cell);
             }else if(g->getOpenPos(i,j) == 'f') {
                 SDL_Rect flag = {
@@ -170,7 +133,7 @@ void reloadGrid(SDL_Renderer* rend, Grid* g) {
 }
 
 void gameOver(int x, int y) {
-    printf("\nPosition (%d,%d) killed you", x, y);
+    cout << "\nPosition (" << x << "," << y << ") killed you\n";
 }
 
 Grid* reset(SDL_Renderer* rend, Grid* g) {
@@ -178,11 +141,31 @@ Grid* reset(SDL_Renderer* rend, Grid* g) {
     return new Grid(g->getWidth(), g->getHeight(), g->getMines());
 }
 
+Grid* loadGame(SDL_Renderer* rend) {
+    Grid helper;
+    FILE* save;
+    save = fopen("save.bin", "rb");
+    fread(&helper, sizeof(Grid), 1, save);
+    helper.setFirst(false);
+    helper.resetFieldstoreveal();
+    fclose(save);
+    return new Grid(helper);
+}
+
 
 //----------Grid functions----------
 
+void Grid::saveGame() {
+    Grid h = Grid(*this);
+    h.first = false;
+    FILE* save;
+    save = fopen("save.bin", "wb");
+    fwrite(&h, sizeof(Grid), 1, save);
+    fclose(save);
+}
+
 void Grid::printHidden() {
-    printf("%d\n%d\n%d\n", width, height, nmines);
+    //printf("%d\n%d\n%d\n", width, height, nmines);
     printf("\n   ");
     for(int i = 1; i <= width; i++) {
         if(i < 10) printf("%d  ", i);
@@ -326,20 +309,7 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
     return;
 }
 
-void Grid::saveGame() {
-    Grid h = *this;
-    FILE* save;
-    save = fopen("save.bin", "wb");
-    if (save == NULL) {
-        printf("The file is not opened - try again");
-        return;
-    }
-    fwrite(&h, sizeof(grid), 1, save);
-    fclose(save);
-}
-
 bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
-    if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') flags++;
     if(grid_cursor->x/GRID_CELL_SIZE < 0 || grid_cursor->y/GRID_CELL_SIZE < 0 || grid_cursor->x/GRID_CELL_SIZE >= width || grid_cursor->y/GRID_CELL_SIZE >= height) return 1;
     open[(grid_cursor->x/GRID_CELL_SIZE)+(width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
     if(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)]==10) return 0;

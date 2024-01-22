@@ -51,7 +51,15 @@ public:
             }
         }
     }
-    Grid(Grid &g) : width(g.width), height(g.height), nmines(g.nmines), fieldstoreveal(g.fieldstoreveal), flags(g.flags), first(g.first), mode(0) {}
+    Grid(Grid &g) : width(g.width), height(g.height), nmines(g.nmines), fieldstoreveal(g.fieldstoreveal),
+                     flags(g.flags), first(g.first), mode(0) {
+                        for(int i = 0; i < getHeight(); i++) {
+                            for(int j = 0; j < getWidth(); j++) {
+                                grid[j+getWidth()*i] = g.grid[j+getWidth()*i];
+                                open[j+getWidth()*i] = g.open[j+getWidth()*i];
+                            }
+                        }
+                     }
 
     int getWidth() {
         return width;
@@ -68,7 +76,7 @@ public:
     bool getFirst() {
         return first;
     }
-    unsigned getFieldtoreveal() {
+    unsigned getFieldstoreveal() {
         return fieldstoreveal;
     }
     char getOpenPos(int x, int y) {
@@ -77,6 +85,12 @@ public:
 
     void setMode(unsigned m) {
         mode = m;
+    }
+    void setFirst(bool b) {
+        first = b;
+    }
+    void resetFieldstoreveal() {
+        fieldstoreveal = height*width-nmines;
     }
 
     void printHidden();

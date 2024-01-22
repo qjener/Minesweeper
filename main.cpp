@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        if(!g->getFieldtoreveal()) {
+        if(!g->getFieldstoreveal()) {
             game_victory = SDL_TRUE;                
         }
 
@@ -246,18 +246,29 @@ int main(int argc, char** argv) {
                         Menu_Msg2.name = "please start playing first";
                         Menu_Msg2.setAreaVar('y', Menu_Msg.getAreaVar('y')+Menu_Msg.getAreaVar('h'));
 
-                        cout << Menu_Msg.getAreaVar('y') << " " << Menu_Msg2.getAreaVar('y');
                         reload = SDL_TRUE;
                     }else {
-                        g->saveGame();
                         Menu_Msg.name = "Your game was saved successfully";
+                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*8);
+                        Menu_Msg.setAreaVar('h', GRID_CELL_SIZE*2);
+                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4));
+                        Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-2));
+                        if(g->getWidth()%2) Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4)+GRID_CELL_SIZE/2);
+                        if(g->getHeight()%2) Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4)+GRID_CELL_SIZE/2);
+                        g->saveGame();
+
                         Menu_Msg.drawBox(rend);
+                        Menu_Msg2.setAreaVar('w', 0);
+                        Menu_Msg2.setAreaVar('h', 0);
+                        reload = SDL_TRUE;
                     }
                     break;
                 case 4:
                     if(!access("save.bin", F_OK)) {
-                        if(yorN(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE, "Save file detected - do you want to continue your game?"));
-                        g = loadGame(rend);
+                        //if(yorN(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE, "Save file detected - do you want to continue your game?")) {
+                            g = loadGame(rend);
+                            reloadGrid(rend, g);
+                        //}
                     }else {
                         Menu_Msg.name = "No save file detected";
                         Menu_Msg.drawBox(rend);
