@@ -23,33 +23,7 @@ int main(int argc, char** argv) {
     
     SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
 
-    SDL_Rect menu_area = {
-        .x = 0,
-        .y = GRID_CELL_SIZE*g->getHeight(),
-        .w = ((g->getWidth()*GRID_CELL_SIZE)/4),
-        .h = GRID_CELL_SIZE,
-    };
-    SDL_Color menu_text_color = {0,0,0,0};
-    SDL_Color menu_area_color = {255,255,255,0};
-
-    Box *menu = new Box(menu_area, menu_text_color, menu_area_color, "Flag");
-    menu->border_thickness = 4;
-    menu->border_color = {90, 90, 90};
-    menu->drawBox(rend);
-    
-    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Restart";
-    menu->drawBox(rend);
-
-    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Save";
-    menu->drawBox(rend);
-
-    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Load";
-    menu->drawBox(rend);
-
-    
+    setMenu(rend, g);
 
     SDL_Color grid_line_color = {44, 44, 44, 0}; // Dark grey
     //SDL_Color grid_cursor_ghost_color = {44, 44, 44, 255};
@@ -121,7 +95,7 @@ int main(int argc, char** argv) {
 
 
 
-    cleanGrid(rend, g);
+    reloadGrid(rend, g);
     
 
     /*this returns the color of a specific pixel on the window, i didnt need it
@@ -153,7 +127,9 @@ int main(int argc, char** argv) {
                 if(reload == SDL_TRUE) {
                     reload = SDL_FALSE;
                     reloadGrid(rend, g);
-                }                
+                }
+                if(event.button.button == SDL_BUTTON_LEFT) g->setMode(0);
+                else g->setMode(1);
                 break;
             case SDL_MOUSEMOTION:
                 //grid_cursor_ghost.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
@@ -223,14 +199,17 @@ int main(int argc, char** argv) {
         if(menu_clicked == SDL_TRUE) {
             switch(menu_choice) {
                 case 1:
-                    if(!g->getMode())g->setMode(1);
-                    else g->setMode(0);
+                    setParams();
+                    g = new Grid(10, 10, 20);
+                    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
+                    reloadGrid(rend, g);
+                    setMenu(rend, g);
                     break;
                 case 2:
-                    g = reset(rend, g);
+                    g = new Grid(g->getWidth(), g->getHeight(), g->getMines());
+                    reloadGrid(rend, g);
                     game_defeat = SDL_FALSE;
                     game_victory = SDL_FALSE;
-                    //g->printGrid();
                     break;
                 case 3:
                     if(g->getFirst()) {
@@ -267,6 +246,8 @@ int main(int argc, char** argv) {
                     if(!access("save.bin", F_OK)) {
                         //if(yorN(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE, "Save file detected - do you want to continue your game?")) {
                             g = loadGame(rend);
+                            SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
+                            setMenu(rend, g);
                             reloadGrid(rend, g);
                         //}
                     }else {

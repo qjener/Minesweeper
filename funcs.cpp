@@ -51,38 +51,6 @@ int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
     return 0;
 }
 
-void cleanGrid(SDL_Renderer* rend, Grid* g) {
-    SDL_Rect cell = {
-        .x = 0,
-        .y = 0,
-        .w = GRID_CELL_SIZE,
-        .h = GRID_CELL_SIZE,
-    };
-    SDL_Color cell_color = {90,90,90};
-    Box Cell = Box(cell, cell_color, cell_color, " ");
-    Cell.border_color = {180, 180, 180};
-
-    for(int i = 0; i < g->getWidth(); i++) {
-        for(int j = 0; j < g->getHeight(); j++) {
-            Cell.drawBox(rend);
-            Cell.setAreaVar('y', Cell.getAreaVar('y')+GRID_CELL_SIZE);
-        }
-        Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
-        Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
-    }
-
-    SDL_Color grid_line_color = {44, 44, 44, 0};
-    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
-
-    for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-        SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
-    }
-
-    for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-        SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
-    }
-}
-
 void reloadGrid(SDL_Renderer* rend, Grid* g) {
     SDL_Rect cell = {
         .x = 0,
@@ -136,11 +104,6 @@ void gameOver(int x, int y) {
     cout << "\nPosition (" << x << "," << y << ") killed you\n";
 }
 
-Grid* reset(SDL_Renderer* rend, Grid* g) {
-    cleanGrid(rend, g);
-    return new Grid(g->getWidth(), g->getHeight(), g->getMines());
-}
-
 Grid* loadGame(SDL_Renderer* rend) {
     Grid helper;
     FILE* save;
@@ -150,6 +113,38 @@ Grid* loadGame(SDL_Renderer* rend) {
     helper.resetFieldstoreveal();
     fclose(save);
     return new Grid(helper);
+}
+
+void setMenu(SDL_Renderer* rend, Grid* g) {
+    SDL_Rect menu_area = {
+        .x = 0,
+        .y = GRID_CELL_SIZE*g->getHeight(),
+        .w = ((g->getWidth()*GRID_CELL_SIZE)/4),
+        .h = GRID_CELL_SIZE,
+    };
+    SDL_Color menu_text_color = {0,0,0,0};
+    SDL_Color menu_area_color = {255,255,255,0};
+
+    Box *menu = new Box(menu_area, menu_text_color, menu_area_color, "Set size");
+    menu->border_thickness = 4;
+    menu->border_color = {90, 90, 90};
+    menu->drawBox(rend);
+    
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
+    menu->name = "Restart";
+    menu->drawBox(rend);
+
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
+    menu->name = "Save";
+    menu->drawBox(rend);
+
+    menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
+    menu->name = "Load";
+    menu->drawBox(rend);
+}
+
+void setParams() {
+    ;
 }
 
 
@@ -314,10 +309,42 @@ bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
     open[(grid_cursor->x/GRID_CELL_SIZE)+(width*(grid_cursor->y/GRID_CELL_SIZE))] = 'r';
     if(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)]==10) return 0;
 
-    Box t = Box(*grid_cursor, {0, 0, 0, 0}, {255,255,255,0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
+    Box t = Box(*grid_cursor, {0, 0, 0, 0}, {180,180,180, 0}, to_string(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)])); 
     t.border_color = {};
     t.border_thickness = 0;
     t.area_color = {80,80,80};
+
+    switch(grid[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)]) {
+        case 0:
+            t.name = "";
+            break;
+        case 1:
+            t.text_color = {0, 0, 255};
+            break;
+        case 2:
+            t.text_color = {0, 128, 0};
+            break;
+        case 3:
+            t.text_color = {255, 0, 0};
+            break;
+        case 4:
+            t.text_color = {128, 0, 128};
+            break;
+        case 5:
+            t.text_color = {128, 0, 0};
+            break;
+        case 6:
+            t.text_color = {64, 224, 208};
+            break;
+        case 7:
+            t.text_color = {0,0,0};
+            break;
+        case 8:
+            t.text_color = {128, 128, 128};
+        default:
+            break;
+    }
+    t.area_color = {120, 120, 120};
     t.drawBox(rend);
     SDL_RenderPresent(rend);
 

@@ -6,7 +6,7 @@
 ## To-Do:
 
     -text in boxes has to be optimized
-    -maybe instead of exit set parameters or put it into flags?
+    -set size cant create a new 
     -game over needs to reveal mines
     -flags have to have other symbols
 
