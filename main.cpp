@@ -9,19 +9,19 @@ int main(int argc, char** argv) {
 	    cout << "Error initializing SDL_ttf: " << TTF_GetError() << endl;
         return 0;
     }
-    
-    Grid *g = getGrid();
-    
-    //int window_width = (g->getWidth() * GRID_CELL_SIZE) + 1;
-    //int window_height = (g->getWidth() * GRID_CELL_SIZE) + 1;
 
+    
     SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
-                                    g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE, 0);
+                                    16*GRID_CELL_SIZE, (1+16)*GRID_CELL_SIZE, 0);
     SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
+
+    Grid *g = new Grid();
+    
+    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
 
     SDL_Rect menu_area = {
         .x = 0,
@@ -32,8 +32,7 @@ int main(int argc, char** argv) {
     SDL_Color menu_text_color = {0,0,0,0};
     SDL_Color menu_area_color = {255,255,255,0};
 
-    
-    Box *menu = new Box(menu_area, menu_text_color, menu_area_color, "Save");
+    Box *menu = new Box(menu_area, menu_text_color, menu_area_color, "Flag");
     menu->border_thickness = 4;
     menu->border_color = {90, 90, 90};
     menu->drawBox(rend);
@@ -43,11 +42,11 @@ int main(int argc, char** argv) {
     menu->drawBox(rend);
 
     menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Flag";
+    menu->name = "Save";
     menu->drawBox(rend);
 
     menu->setAreaVar('x', menu->getAreaVar('x')+(g->getWidth()*GRID_CELL_SIZE)/4);
-    menu->name = "Exit";
+    menu->name = "Load";
     menu->drawBox(rend);
 
     
@@ -89,9 +88,13 @@ int main(int argc, char** argv) {
     SDL_bool quit = SDL_FALSE; 
     SDL_bool mouse_active = SDL_FALSE;
     SDL_bool mouse_hover = SDL_FALSE;
-    SDL_bool defeat = SDL_FALSE;
+    SDL_bool game_defeat = SDL_FALSE;
     SDL_bool game_victory = SDL_FALSE;
     SDL_bool mouse_click = SDL_FALSE;
+    SDL_bool menu_clicked = SDL_FALSE;
+    SDL_bool reload = SDL_FALSE;
+    
+    int menu_choice;
 
 
     SDL_Rect game_end = {
@@ -104,7 +107,22 @@ int main(int argc, char** argv) {
     if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
     Box end = Box(game_end, "End");
 
+
+    SDL_Rect menu_msg = {
+        .x = 0,
+        .y = 0,
+        .w = 0,
+        .h = 0,
+    };
+    if(g->getWidth()%2) menu_msg.x +=(GRID_CELL_SIZE/2);
+    if(g->getHeight()%2) menu_msg.y +=(GRID_CELL_SIZE/2);
+    Box Menu_Msg = Box(menu_msg, "Error");
+    Box Menu_Msg2 = Box(Menu_Msg);
+
+
+
     cleanGrid(rend, g);
+    
 
     /*this returns the color of a specific pixel on the window, i didnt need it
 
@@ -124,7 +142,7 @@ int main(int argc, char** argv) {
     */
 
     while (!quit) {
-        SDL_SetWindowAlwaysOnTop(win, SDL_FALSE);
+        //SDL_SetWindowAlwaysOnTop(win, SDL_FALSE);
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
@@ -132,6 +150,10 @@ int main(int argc, char** argv) {
                 grid_cursor.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 grid_cursor.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 mouse_click = SDL_TRUE;
+                if(reload == SDL_TRUE) {
+                    reload = SDL_FALSE;
+                    reloadGrid(rend, g);
+                }                
                 break;
             case SDL_MOUSEMOTION:
                 //grid_cursor_ghost.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
@@ -156,55 +178,102 @@ int main(int argc, char** argv) {
         //SDL_RenderClear(rend);
 
         // Draw grid lines.
-        SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
-
-        for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-            SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
-        }
-
-        for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
-            SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
-        }
-
-        SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+        //SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
 
         // Draw grid ghost cursor.
         /*if (mouse_active && mouse_click) {
             SDL_SetRenderDrawColor(rend, grid_cursor_ghost_color.r, grid_cursor_ghost_color.g, grid_cursor_ghost_color.b, grid_cursor_ghost_color.a);
             SDL_RenderFillRect(rend, &grid_cursor_ghost);
         }*/
-        if(game_victory == SDL_FALSE && defeat == SDL_FALSE) {
-            // clicking on the playing field
-            if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
+        // clicking on the playing field
+        if(game_victory == SDL_FALSE && game_defeat == SDL_FALSE && menu_clicked == SDL_FALSE && mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
                 //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
-                if(!g->getMode()) {
-                    if(g->getFirst()) g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
-                    defeat = g->revealPos(rend, &grid_cursor);
-                } else {
-                    g->flagPos(rend, &grid_cursor_color, &grid_cursor);
+            if(!g->getMode()) {
+                if(g->getFirst()) {
+                    g->buildGrids(grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
                 }
-                //g->printGrid();
+                game_defeat = g->revealPos(rend, &grid_cursor);
+            } else {
+                g->flagPos(rend, &grid_cursor_color, &grid_cursor);
             }
+        }
 
-            // clicking on the menu
-            if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
-                useMenu(rend, g, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+        // clicking on the menu
+        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+            menu_choice = useMenu(rend, g, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+            menu_clicked = SDL_TRUE;
+            if(!menu_choice) {
+                SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Menu Error", "There was an error when clicking the menu", win);
+                quit = SDL_TRUE;
             }
+        }
 
-            if(!g->getFieldtoreveal()) {
-                game_victory = SDL_TRUE;                
-            }
-        }else if(game_victory == SDL_TRUE) {
+        if(!g->getFieldtoreveal()) {
+            game_victory = SDL_TRUE;                
+        }
+
+        if(game_victory == SDL_TRUE) {
             end.name = "VICTORY";
             end.drawBox(rend);
-        }else {
+        }
+        if(game_defeat == SDL_TRUE) {
             end.name = "GAME OVER";
             end.drawBox(rend);
+        }
+        if(menu_clicked == SDL_TRUE) {
+            switch(menu_choice) {
+                case 1:
+                    if(!g->getMode())g->setMode(1);
+                    else g->setMode(0);
+                    break;
+                case 2:
+                    g = reset(rend, g);
+                    game_defeat = SDL_FALSE;
+                    game_victory = SDL_FALSE;
+                    //g->printGrid();
+                    break;
+                case 3:
+                    if(g->getFirst()) {
+                        Menu_Msg.name = "You cant save an unloaded game"; // - please start playing first
+                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*8);
+                        Menu_Msg.setAreaVar('h', GRID_CELL_SIZE*2);
+                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4));
+                        Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-2));
+                        if(g->getWidth()%2) Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4)+GRID_CELL_SIZE/2);
+                        if(g->getHeight()%2) Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4)+GRID_CELL_SIZE/2);
+                        
+                        Menu_Msg2 = Box(Menu_Msg);
+                        Menu_Msg2.name = "please start playing first";
+                        Menu_Msg2.setAreaVar('y', Menu_Msg.getAreaVar('y')+Menu_Msg.getAreaVar('h'));
+
+                        cout << Menu_Msg.getAreaVar('y') << " " << Menu_Msg2.getAreaVar('y');
+                        reload = SDL_TRUE;
+                    }else {
+                        g->saveGame();
+                        Menu_Msg.name = "Your game was saved successfully";
+                        Menu_Msg.drawBox(rend);
+                    }
+                    break;
+                case 4:
+                    if(!access("save.bin", F_OK)) {
+                        if(yorN(rend, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE, "Save file detected - do you want to continue your game?"));
+                        g = loadGame(rend);
+                    }else {
+                        Menu_Msg.name = "No save file detected";
+                        Menu_Msg.drawBox(rend);
+                    }
+                    break;
+            }
+            menu_clicked = SDL_FALSE;
         }
         mouse_click = SDL_FALSE;
         SDL_RenderPresent(rend);
         if(quit == SDL_TRUE) {
             SDL_Quit();
+        }
+        if(reload == SDL_TRUE) {
+            Menu_Msg.drawBox(rend);
+            Menu_Msg2.drawBox(rend);
         }
     }
 

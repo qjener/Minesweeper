@@ -59,6 +59,9 @@ public:
     int getHeight() {
         return height;
     }
+    int getMines() {
+        return nmines;
+    }
     unsigned getMode() {
         return mode;
     }
@@ -69,7 +72,7 @@ public:
         return fieldstoreveal;
     }
     char getOpenPos(int x, int y) {
-        return open[x/width*y];
+        return open[x+width*y];
     }
 
     void setMode(unsigned m) {
@@ -88,6 +91,7 @@ public:
 };
 
 class Box {
+public:
     SDL_Rect area, text_rect;
 public:
     SDL_Texture* text;
@@ -117,6 +121,7 @@ public:
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
         font = TTF_OpenFont("Lucida Console Regular.ttf", 24);        
     }
+    Box(Box &b) : area(b.area), text_rect(b.text_rect), text(b.text), text_color(b.text_color), area_color(b.area_color), border_color(b.border_color), border_thickness(b.border_thickness), name(b.name), font(b.font) {}
     Box(SDL_Rect a, string n) : area(a), name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
         text_rect = {
@@ -172,10 +177,11 @@ public:
 
 //if you comment a function like this you can alway see their description when hovering them anywhere
 //the description should say what the function does and what what it needs as parameter
-Grid* getGrid();
 void gameOver(int x, int y);
 void victory(SDL_Renderer* rend, Grid* g, SDL_Surface* win);
-bool yorN();
-void useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
+bool yorN(SDL_Renderer* rend, int w, int h, string question);
+int useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
 void cleanGrid(SDL_Renderer* rend, Grid* g);
-void reset(SDL_Renderer* rend, Grid* g);
+Grid* reset(SDL_Renderer* rend, Grid* g);
+Grid* loadGame(SDL_Renderer* rend);
+void reloadGrid(SDL_Renderer* rend, Grid* g);

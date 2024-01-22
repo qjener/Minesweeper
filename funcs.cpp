@@ -1,47 +1,58 @@
 #include "funcs.h"
 
-bool yorN() {
-    char choice;
-    while(1) {
-        scanf("%c", &choice);
-        getchar();
-        if (choice == 'Y' || choice == 'y') {
-            return true;
-        }else if(choice == 'N' || choice == 'n') {
-            return false;
-        }else {
-            printf("Not a valid answer - try again\n");
-        }
-    }
+bool yorN(SDL_Renderer* rend, int w, int h, string question) {
+    SDL_Rect choice_area {
+        .x = GRID_CELL_SIZE*((w/2)-3),
+        .y = GRID_CELL_SIZE*((h/2)-2),
+        .w = GRID_CELL_SIZE*5,
+        .h = GRID_CELL_SIZE*3,
+    };
+    if(w%2) choice_area.x +=(GRID_CELL_SIZE/2);
+    if(h%2) choice_area.y +=(GRID_CELL_SIZE/2);
+    Box choice_box = Box(choice_area, "");
+    choice_box.drawBox(rend);
+
+    SDL_Rect choice_question {
+        .x = choice_area.x,
+        .y = choice_area.y,
+        .w = choice_area.w,
+        .h = choice_area.h/2,
+    };
+    Box question_box = Box(choice_question, question);
+    question_box.drawBox(rend);
+
+
+    SDL_Rect choice_yes {
+        .x = GRID_CELL_SIZE*((w/2)-2),
+        .y = GRID_CELL_SIZE*((h/2)-1),
+        .w = GRID_CELL_SIZE*4,
+        .h = GRID_CELL_SIZE*2,
+    };
+    SDL_Rect choice_no {
+        .x = GRID_CELL_SIZE*((w/2)-2),
+        .y = GRID_CELL_SIZE*((h/2)-1),
+        .w = GRID_CELL_SIZE*4,
+        .h = GRID_CELL_SIZE*2,
+    };
+    scanf("%d", &w);
+    return 0;
 }
 
-void useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
-    if(x < g->getWidth()/4) g->saveGame();
-    else if(x < g->getWidth()/2) reset(rend, g);
-    else if(x < (g->getWidth()/4)*3) {                   //mode switch
-        if(!g->getMode())g->setMode(1);
-        else g->setMode(0);
-    }
-    else if(x < g->getWidth()) {exit(1);}
-    return;
-}
-
-Grid* getGrid() {
+Grid* loadGame(SDL_Renderer* rend) {
     Grid helper;
     FILE* save;
-    if (!access("save.bin", F_OK)) {
-        printf("Save file detected - do you want to continue your game? (Y/n)\n");
-        if(yorN()) {
-            save = fopen("save.bin", "rb");
-            fread(&helper, sizeof(Grid), 1, save);
-            fclose(save);
-            helper.printGrid();
-            return new Grid(helper);
-        }
-    }
+    //if (!access("save.bin", F_OK)) {
+      //  if(yorN(rend, ww, wh, "Save file detected - do you want to continue your game?")) {
+    save = fopen("save.bin", "rb");
+    fread(&helper, sizeof(Grid), 1, save);
+    fclose(save);
+    helper.printGrid();
+    return new Grid(helper);
+}
 
+/*
     unsigned w, h, m;
-    if(yorN()) {
+    if(yorN(rend, ww, wh, "Save file detected - do you want to continue your game?")) {
         while(1) {
             printf("Width: ");
             scanf("%u", &w);
@@ -63,10 +74,20 @@ Grid* getGrid() {
             printf("\nvery original\n");
         }
         getchar();
-        return new Grid(w, h, m);
-    }else {
-        return new Grid();
+        //return new Grid(w, h, m);
+    }*/
+
+int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
+    if(x < g->getWidth()/4) {                                       //flags on
+        return 1;
+    }else if(x < g->getWidth()/2) {                                 //restart
+        return 2;
+    }else if(x < (g->getWidth()/4)*3) {                             //save game
+        return 3;
+    }else if(x < g->getWidth()) {                                   //load game
+        return 4;
     }
+    return 0;
 }
 
 void cleanGrid(SDL_Renderer* rend, Grid* g) {
@@ -88,15 +109,73 @@ void cleanGrid(SDL_Renderer* rend, Grid* g) {
         Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
         Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
     }
+
+    SDL_Color grid_line_color = {44, 44, 44, 0};
+    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+
+    for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
+    }
+
+    for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
+    }
+}
+
+void reloadGrid(SDL_Renderer* rend, Grid* g) {
+    SDL_Rect cell = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+    SDL_Color cell_color = {90,90,90};
+    Box Cell = Box(cell, cell_color, cell_color, " ");
+    Cell.border_color = {180, 180, 180};
+
+    for(int i = 0; i < g->getWidth(); i++) {
+        for(int j = 0; j < g->getHeight(); j++) {
+            if(g->getOpenPos(i,j) == 'r') {
+                g->drawDigit(rend, &cell);
+            }else if(g->getOpenPos(i,j) == 'f') {
+                SDL_Rect flag = {
+                    .x = Cell.getAreaVar('x'),
+                    .y = Cell.getAreaVar('y'),
+                    .w = GRID_CELL_SIZE,
+                    .h = GRID_CELL_SIZE,
+                };
+                SDL_Color cell_color = {90,90,90};
+                Box Flag = Box(flag, cell_color, cell_color, "F");
+                Flag.text_color = {255, 0, 0};
+                Flag.border_color = {180, 180, 180};
+                Flag.drawBox(rend);
+            }else {
+                Cell.drawBox(rend);
+            }
+            Cell.setAreaVar('y', Cell.getAreaVar('y')+GRID_CELL_SIZE);
+        }
+        Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
+        Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
+    }
+    SDL_Color grid_line_color = {44, 44, 44, 0};
+    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+
+    for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
+    }
+
+    for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
+    }
 }
 
 void gameOver(int x, int y) {
     printf("\nPosition (%d,%d) killed you", x, y);
 }
 
-void reset(SDL_Renderer* rend, Grid* g) {
+Grid* reset(SDL_Renderer* rend, Grid* g) {
     cleanGrid(rend, g);
-    //g = getGrid();
+    return new Grid(g->getWidth(), g->getHeight(), g->getMines());
 }
 
 
@@ -196,6 +275,7 @@ SDL_bool Grid::revealPos(SDL_Renderer *rend, SDL_Rect *grid_cursor) {
 }
 
 void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *grid_cursor) {
+    SDL_Color grid_line_color = {44, 44, 44, 0};
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] == 'f') {                                        //remove flag
         open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'x';
         flags++;
@@ -209,6 +289,12 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
         Box Cell = Box(cell, cell_color, cell_color, "");
         Cell.border_color = {180, 180, 180};
         Cell.drawBox(rend);
+        
+        SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+        SDL_RenderDrawLine(rend, Cell.getAreaVar('x'), Cell.getAreaVar('y'), Cell.getAreaVar('x')+GRID_CELL_SIZE, Cell.getAreaVar('y'));
+        SDL_RenderDrawLine(rend, Cell.getAreaVar('x')+GRID_CELL_SIZE, Cell.getAreaVar('y'), Cell.getAreaVar('x')+GRID_CELL_SIZE, Cell.getAreaVar('y')+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, Cell.getAreaVar('x'), Cell.getAreaVar('y'), Cell.getAreaVar('x'), Cell.getAreaVar('y')+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, Cell.getAreaVar('x'), Cell.getAreaVar('y')+GRID_CELL_SIZE, Cell.getAreaVar('x')+GRID_CELL_SIZE, Cell.getAreaVar('y')+GRID_CELL_SIZE);
         return;
     }
     if(open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] != 'x') {                                        //return if already revealed
@@ -228,6 +314,12 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
     Flag.text_color = {255, 0, 0};
     Flag.border_color = {180, 180, 180};
     Flag.drawBox(rend);
+
+    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+        SDL_RenderDrawLine(rend, Flag.getAreaVar('x'), Flag.getAreaVar('y'), Flag.getAreaVar('x')+GRID_CELL_SIZE, Flag.getAreaVar('y'));
+        SDL_RenderDrawLine(rend, Flag.getAreaVar('x')+GRID_CELL_SIZE, Flag.getAreaVar('y'), Flag.getAreaVar('x')+GRID_CELL_SIZE, Flag.getAreaVar('y')+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, Flag.getAreaVar('x'), Flag.getAreaVar('y'), Flag.getAreaVar('x'), Flag.getAreaVar('y')+GRID_CELL_SIZE);
+        SDL_RenderDrawLine(rend, Flag.getAreaVar('x'), Flag.getAreaVar('y')+GRID_CELL_SIZE, Flag.getAreaVar('x')+GRID_CELL_SIZE, Flag.getAreaVar('y')+GRID_CELL_SIZE);
                                                                                                                 //execute putting in flag (green)
     open[grid_cursor->x/GRID_CELL_SIZE+width*(grid_cursor->y/GRID_CELL_SIZE)] = 'f';
     flags--;
@@ -235,10 +327,6 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
 }
 
 void Grid::saveGame() {
-    if(first) {
-        printf("You cant save an unloaded game - pls start playing first\n");
-        return;
-    }
     Grid h = *this;
     FILE* save;
     save = fopen("save.bin", "wb");
@@ -248,7 +336,6 @@ void Grid::saveGame() {
     }
     fwrite(&h, sizeof(grid), 1, save);
     fclose(save);
-    printf("Your game was saved successfully");
 }
 
 bool Grid::drawDigit(SDL_Renderer* rend, SDL_Rect* grid_cursor) {
@@ -298,16 +385,14 @@ void Box::drawBox(SDL_Renderer *rend) {
         SDL_RenderDrawLine(rend, area.x, area.y+i, area.x+area.w, area.y+i);
         SDL_RenderDrawLine(rend, area.x, area.y+area.h-i, area.x+area.w, area.y+area.h-i);
     }
-    //SDL_RenderDrawLine(rend, i, 0, i, window_height);
-    //SDL_RenderDrawLine(rend, 0, i, window_width, i);
 
     SDL_Surface* surface = TTF_RenderText_Solid(font, name.c_str(), text_color);
-    //if(surface->w > area.w) surface->w = area.w;
-    //if(surface->h > area.h) surface->h = area.h;
+    //if(surface->w > area.w) text_rect.w = area.w;
+    //if(surface->h > area.h) text_rect.h = area.h;
     text = SDL_CreateTextureFromSurface(rend, surface);
     SDL_FreeSurface(surface);
     SDL_RenderCopy(rend, text, NULL, &text_rect);
-    //cout << endl << text_rect.x << " " << text_rect.y << " " << text_rect.w << " " << text_rect.h;
+    //cout << endl << text_rect.w << " " << text_rect.h << " " << text_rect.w << " " << text_rect.h;
 }
 
 SDL_Rect* Box::getArea() {
@@ -318,24 +403,26 @@ bool Box::setAreaVar(char var, int n) {
     switch(var) {
         case 'x':
             area.x = n;
-            text_rect.x = area.x+(area.w/5);
             break;
         case 'y':
             area.y = n;
-            text_rect.y = area.y+(area.y/5);
             break;
         case 'w':
             area.w = n;
-            text_rect.w = area.w+(area.w/5)*2;
             break;
         case 'h':
             area.h = n;
-            text_rect.h = area.h+(area.h/5)*2;
             break;
         default:
             cout << "wrong area variable";
             return 0;
     }
+    text_rect = {
+            .x = area.x+(area.w/5),
+            .y = area.y+(area.h/5),
+            .w = area.w-(area.w/5)*2,
+            .h = area.h-(area.h/5)*2,
+        };
     return 1;
 }
 

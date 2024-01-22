@@ -5,10 +5,9 @@
 
 ## To-Do:
 
-    -cant either export or import save files
-    -restart doesnt work
+    -save files dont work
     -text in boxes has to be optimized
-    -maybe instead of exit set parameters or put it into reset?
+    -maybe instead of exit set parameters or put it into flags?
     -game over needs to reveal mines
 
 ## Compile and run:
