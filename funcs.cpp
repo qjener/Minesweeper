@@ -39,24 +39,24 @@ bool yorN(SDL_Renderer* rend, int w, int h, string question) {
 }
 
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
-    if(x < g->getWidth()/4) {                                       //flags on
+    if(x < (g->getWidth()*GRID_CELL_SIZE)/4) {                                       //flags on
         return 1;
     }
-    if(x < g->getWidth()/2) {                                 //restart
+    if(x < (g->getWidth()*GRID_CELL_SIZE)/2) {                                 //restart
         return 2;
     }
-    if(x < (g->getWidth()/4)*3) {                             //save game
-        //cout << g->getWidth() << " " << (g->getWidth()/4)*3;
+    if(x < ((g->getWidth()*GRID_CELL_SIZE)/4)*3) {                             //save game
+        //cout << " " << x << " " << ((g->getWidth()*GRID_CELL_SIZE)/4)*3 << "save";
         return 3;
     }
-    if(x < g->getWidth()) {                                   //load game
-        //cout << g->getWidth() << " " << (g->getWidth()/4)*3;
+    if(x < g->getWidth()*GRID_CELL_SIZE) {                                   //load game
+        //cout << " " << x << " " << ((g->getWidth()*GRID_CELL_SIZE)/4)*3 << "load";
         return 4;
     }
     return 0;
 }
 
-void reloadGrid(SDL_Renderer* rend, Grid* g) {
+void reloadGrid(SDL_Renderer* rend, Grid* g, SDL_Texture* flagimg) {
     SDL_Rect cell = {
         .x = 0,
         .y = 0,
@@ -84,7 +84,8 @@ void reloadGrid(SDL_Renderer* rend, Grid* g) {
                 Box Flag = Box(flag, cell_color, cell_color, "F");
                 Flag.text_color = {255, 0, 0};
                 Flag.border_color = {180, 180, 180};
-                Flag.drawBox(rend);
+                ImageBox F = ImageBox(Flag, flagimg);
+                F.drawBox(rend);
             }else {
                 Cell.drawBox(rend);
             }
@@ -105,8 +106,67 @@ void reloadGrid(SDL_Renderer* rend, Grid* g) {
     }
 }
 
-void gameOver(int x, int y) {
-    cout << "\nPosition (" << x << "," << y << ") killed you\n";
+void gameOver(int x, int y, SDL_Renderer* rend, Grid* g, SDL_Texture* grey_mine, SDL_Texture* red_mine, SDL_Texture* flagimg) {
+    SDL_Rect cell = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+    SDL_Color cell_color = {90,90,90};
+    Box Cell = Box(cell, cell_color, cell_color, " ");
+    Cell.border_color = {180, 180, 180};
+
+    ImageBox Grey = ImageBox(Cell, grey_mine);
+    ImageBox Red = ImageBox(Cell, red_mine);
+
+    for(int i = 0; i < g->getWidth(); i++) {
+        for(int j = 0; j < g->getHeight(); j++) {
+            if(g->getOpenPos(i,j) == 'r') {
+                cell.x = i*GRID_CELL_SIZE;
+                cell.y = j*GRID_CELL_SIZE;
+                g->drawDigit(rend, &cell); 
+            }else if(g->getOpenPos(i,j) == 'f') {
+                SDL_Rect flag = {
+                    .x = Cell.getAreaVar('x'),
+                    .y = Cell.getAreaVar('y'),
+                    .w = GRID_CELL_SIZE,
+                    .h = GRID_CELL_SIZE,
+                };
+                SDL_Color cell_color = {90,90,90};
+                Box Flag = Box(flag, cell_color, cell_color, "F");
+                Flag.text_color = {255, 0, 0};
+                Flag.border_color = {180, 180, 180};
+                ImageBox F = ImageBox(Flag, flagimg);
+                F.drawBox(rend);
+            }else if(g->getHiddenPos(i,j) == 10) {
+               Grey.setAreaVar('x', i*GRID_CELL_SIZE);
+               Grey.setAreaVar('y', j*GRID_CELL_SIZE);
+               Grey.drawBox(rend);
+            }else {
+                Cell.drawBox(rend);
+            }
+            Cell.setAreaVar('y', Cell.getAreaVar('y')+GRID_CELL_SIZE);
+        }
+        Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
+        Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
+    }
+    cout << x << " " << y;
+    Red.setAreaVar('x', x);
+    Red.setAreaVar('y', y);
+    Red.drawBox(rend);
+
+    SDL_Color grid_line_color = {44, 44, 44, 0};
+    SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
+
+    for (int i = 0; i < 1 + g->getWidth() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, i, 0, i, g->getHeight()*GRID_CELL_SIZE);
+    }
+
+    for (int i = 0; i < 1 + g->getHeight() * GRID_CELL_SIZE; i += GRID_CELL_SIZE) {
+        SDL_RenderDrawLine(rend, 0, i, g->getWidth()*GRID_CELL_SIZE, i);
+    }
+    //cout << "\nPosition (" << x/GRID_CELL_SIZE << "," << y/GRID_CELL_SIZE << ") killed you\n";
 }
 
 Grid* loadGame(SDL_Renderer* rend) {
@@ -294,9 +354,10 @@ void Grid::flagPos(SDL_Renderer *rend, SDL_Color *grid_cursor_color, SDL_Rect *g
     };
     SDL_Color cell_color = {90,90,90};
     Box Flag = Box(flag, cell_color, cell_color, "F");
-    Flag.text_color = {255, 0, 0};
-    Flag.border_color = {180, 180, 180};
-    Flag.drawBox(rend);
+    ImageBox F = ImageBox(Flag, flagimg);
+    //Flag.text_color = {255, 0, 0};
+    F.border_color = {180, 180, 180};
+    F.drawBox(rend);
 
     SDL_SetRenderDrawColor(rend, grid_line_color.r, grid_line_color.g, grid_line_color.b, grid_line_color.a);
         SDL_RenderDrawLine(rend, Flag.getAreaVar('x'), Flag.getAreaVar('y'), Flag.getAreaVar('x')+GRID_CELL_SIZE, Flag.getAreaVar('y'));
@@ -442,4 +503,48 @@ int Box::getAreaVar(char var) {
             cout << "wrong area variable";
             return 0;
     }
+}
+
+
+//----------ImageBox functions----------
+
+void ImageBox::drawBox(SDL_Renderer* rend) {
+    SDL_SetRenderDrawColor(rend, border_color.r, border_color.g, border_color.b, border_color.a);
+    for(int i = 0; i <= border_thickness; i++) {
+        SDL_RenderDrawLine(rend, area.x+i, area.y, area.x+i, area.y+area.h);
+        SDL_RenderDrawLine(rend, area.x+area.w-i, area.y, area.x+area.w-i, area.y+area.h);
+
+        SDL_RenderDrawLine(rend, area.x, area.y+i, area.x+area.w, area.y+i);
+        SDL_RenderDrawLine(rend, area.x, area.y+area.h-i, area.x+area.w, area.y+area.h-i);
+    }
+
+    SDL_RenderCopy(rend, image, NULL, &image_area);
+    cout << endl << image_area.x << " " << image_area.y << " " << image_area.w << " " << image_area.h;
+}
+
+bool ImageBox::setAreaVar(char var, int n) {
+    switch(var) {
+        case 'x':
+            area.x = n;
+            break;
+        case 'y':
+            area.y = n;
+            break;
+        case 'w':
+            area.w = n;
+            break;
+        case 'h':
+            area.h = n;
+            break;
+        default:
+            cout << "wrong area variable";
+            return 0;
+    }
+    image_area = {
+            .x = area.x+border_thickness+1,
+            .y = area.y+border_thickness+1,
+            .w = area.w-(border_thickness+1)*2,
+            .h = area.h-(border_thickness+1)*2,
+        };
+    return 1;
 }

@@ -20,7 +20,7 @@ private:
     int width;
     int height;
     int nmines;
-    unsigned fieldstoreveal;
+    int fieldstoreveal;
     unsigned flags;
     bool first;
     unsigned mode;
@@ -77,11 +77,14 @@ public:
     bool getFirst() {
         return first;
     }
-    unsigned getFieldstoreveal() {
+    int getFieldstoreveal() {
         return fieldstoreveal;
     }
     char getOpenPos(int x, int y) {
         return open[x+width*y];
+    }
+    unsigned getHiddenPos(int x, int y) {
+        return grid[x+width*y];
     }
 
     void setMode(unsigned m) {
@@ -92,6 +95,9 @@ public:
     }
     void resetFieldstoreveal() {
         fieldstoreveal = height*width-nmines;
+    }
+    void setDefeat() {
+        fieldstoreveal = -1;
     }
 
     void printHidden();
@@ -108,7 +114,6 @@ public:
 class Box {
 public:
     SDL_Rect area, text_rect;
-public:
     SDL_Texture* text;
     SDL_Color text_color, area_color, border_color;
     int border_thickness;
@@ -190,14 +195,48 @@ public:
     
 };
 
+class ImageBox: public Box {
+public:
+    SDL_Texture* image;
+    SDL_Rect image_area;
+public:
+    ImageBox() : Box(), image(NULL) {
+        image_area = {
+            .x = area.x+border_thickness+1,
+            .y = area.y+border_thickness+1,
+            .w = area.w-(border_thickness+1)*2,
+            .h = area.h-(border_thickness+1)*2,
+        };
+    }
+    ImageBox(SDL_Texture* i) : Box(), image(i) {
+        image_area = {
+            .x = area.x+border_thickness+1,
+            .y = area.y+border_thickness+1,
+            .w = area.w-(border_thickness+1)*2,
+            .h = area.h-(border_thickness+1)*2,
+        };
+    }
+    ImageBox(Box b, SDL_Texture* i) : Box(b), image(i) {
+        image_area = {
+            .x = area.x+border_thickness+1,
+            .y = area.y+border_thickness+1,
+            .w = area.w-(border_thickness+1)*2,
+            .h = area.h-(border_thickness+1)*2,
+        };
+    }
+
+    void drawBox(SDL_Renderer* rend);
+    bool setAreaVar(char var, int n);
+};
+
 //if you comment a function like this you can alway see their description when hovering them anywhere
 //the description should say what the function does and what what it needs as parameter
-void gameOver(int x, int y);
+void gameOver(int x, int y, SDL_Renderer* rend, Grid* g, SDL_Texture* grey_mine, SDL_Texture* red_mine, SDL_Texture* flagimg);
 void victory(SDL_Renderer* rend, Grid* g, SDL_Surface* win);
 bool yorN(SDL_Renderer* rend, int w, int h, string question);
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
 Grid* reset(SDL_Renderer* rend, Grid* g);
 Grid* loadGame(SDL_Renderer* rend);
-void reloadGrid(SDL_Renderer* rend, Grid* g);
+void reloadGrid(SDL_Renderer* rend, Grid* g, SDL_Texture* flagimg);
 void setMenu(SDL_Renderer* rend, Grid* g);
 void setParams();

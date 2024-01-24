@@ -17,12 +17,15 @@ int main(int argc, char** argv) {
     SDL_Window* win = SDL_CreateWindow("Minesweeper", // creates a window
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
-                                    16*GRID_CELL_SIZE, (1+16)*GRID_CELL_SIZE, 0);
+                                    16*GRID_CELL_SIZE, (16+1)*GRID_CELL_SIZE, 0); 
     SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
     SDL_Texture* flagimg = IMG_LoadTexture(rend, "flag.png");
+    SDL_Texture* grey_mine = IMG_LoadTexture(rend, "grey_mine.png");
+    SDL_Texture* red_mine = IMG_LoadTexture(rend, "red_mine.png");
+
 
     Grid *g = new Grid();
     
@@ -38,13 +41,6 @@ int main(int argc, char** argv) {
     SDL_RenderDrawLine(rend, (g->getWidth()*GRID_CELL_SIZE)/4, (g->getHeight())*GRID_CELL_SIZE, (g->getWidth()*GRID_CELL_SIZE)/4, (1+g->getHeight())*GRID_CELL_SIZE);
     SDL_RenderDrawLine(rend, (g->getWidth()*GRID_CELL_SIZE)/2, (g->getHeight())*GRID_CELL_SIZE, (g->getWidth()*GRID_CELL_SIZE)/2, (1+g->getHeight())*GRID_CELL_SIZE);
     SDL_RenderDrawLine(rend, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, (g->getHeight())*GRID_CELL_SIZE, ((g->getWidth()*GRID_CELL_SIZE)/4)*2, (1+g->getHeight())*GRID_CELL_SIZE);
-
-    /*
-    SDL_Rect grid_cursor_ghost = {
-        grid_cursor.x,
-        grid_cursor.y,
-        GRID_CELL_SIZE, GRID_CELL_SIZE
-    };*/
 
     SDL_Rect grid_backround = {
         .x = 0,
@@ -98,9 +94,16 @@ int main(int argc, char** argv) {
     Box Menu_Msg = Box(menu_msg, "Error");
     Box Menu_Msg2 = Box(Menu_Msg);
 
+    int menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+    SDL_Rect grid_cursor_menu = {
+        grid_cursor.x,
+        grid_cursor.y,
+        menu_button_width, GRID_CELL_SIZE
+    };
 
 
-    reloadGrid(rend, g);
+
+    reloadGrid(rend, g, flagimg);
     
 
     /*this returns the color of a specific pixel on the window, i didnt need it
@@ -129,10 +132,11 @@ int main(int argc, char** argv) {
             case SDL_MOUSEBUTTONDOWN:
                 grid_cursor.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 grid_cursor.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
+                grid_cursor_menu.x = (event.motion.x / menu_button_width) * menu_button_width;
                 mouse_click = SDL_TRUE;
                 if(reload == SDL_TRUE) {
                     reload = SDL_FALSE;
-                    reloadGrid(rend, g);
+                    reloadGrid(rend, g, flagimg);
                 }
                 if(event.button.button == SDL_BUTTON_LEFT) g->setMode(0);
                 else g->setMode(1);
@@ -182,7 +186,7 @@ int main(int argc, char** argv) {
 
         // clicking on the menu
         if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
-            menu_choice = useMenu(rend, g, grid_cursor.x/GRID_CELL_SIZE, grid_cursor.y/GRID_CELL_SIZE);
+            menu_choice = useMenu(rend, g, grid_cursor_menu.x, grid_cursor_menu.y);
             menu_clicked = SDL_TRUE;
             if(!menu_choice) {
                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Menu Error", "There was an error when clicking the menu", win);
@@ -208,6 +212,10 @@ int main(int argc, char** argv) {
             end.drawBox(rend);
         }
         if(game_defeat == SDL_TRUE) {
+            if(g->getFieldstoreveal() != -1) {
+                gameOver(grid_cursor.x, grid_cursor.y, rend, g, grey_mine, red_mine, flagimg);
+                g->setDefeat();
+            }
             game_end = {
                 .x = GRID_CELL_SIZE*((g->getWidth()/2)-2),
                 .y = GRID_CELL_SIZE*((g->getHeight()/2)-1),
@@ -226,12 +234,15 @@ int main(int argc, char** argv) {
                     setParams();
                     g = new Grid(10, 10, 20);
                     SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
-                    reloadGrid(rend, g);
+                    reloadGrid(rend, g, flagimg);
                     setMenu(rend, g);
+                    menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                    game_defeat = SDL_FALSE;
+                    game_victory = SDL_FALSE;
                     break;
                 case 2:
                     g = new Grid(g->getWidth(), g->getHeight(), g->getMines());
-                    reloadGrid(rend, g);
+                    reloadGrid(rend, g, flagimg);
                     game_defeat = SDL_FALSE;
                     game_victory = SDL_FALSE;
                     break;
@@ -274,7 +285,8 @@ int main(int argc, char** argv) {
                             g = loadGame(rend);
                             SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
                             setMenu(rend, g);
-                            reloadGrid(rend, g);
+                            menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                            reloadGrid(rend, g, flagimg);
                         //}
                     }else {
                         Menu_Msg.name = "No save file detected";

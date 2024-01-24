@@ -7,7 +7,7 @@ int main(int argc, char** argv) {
 return 0;
 }*/
 
-/*
+
 #include "funcs.h"
 
 int main(int argc, char** argv) {
@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 	SDL_Texture* t;
-	t = IMG_LoadTexture(rend, "flag.png");
+	t = IMG_LoadTexture(rend, "red_mine.png");
 	int w = 500;
 	SDL_RenderCopy(rend, t, NULL, NULL);
 	SDL_RenderPresent(rend);
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
         SDL_RenderPresent( rend );
     }
 }
-*/
+
 
 /*
 int main(int argc, char** argv) {
