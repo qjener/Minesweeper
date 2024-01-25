@@ -5,8 +5,8 @@
 
 ## To-Do:
 
-    -text in boxes has to be optimized
     -set size cant ask for params
+    -timer
 
 ## Compile and run:
 

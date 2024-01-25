@@ -122,6 +122,7 @@ int main(int argc, char** argv) {
     SDL_GetRGBA(PixelData, window_surf->format, &Color.r, &Color.g, &Color.b, &Color.a);
     printf("\n%d, %d, %d, %d\n", Color.r, Color.g, Color.b, Color.a);
     */
+   
 
     while (!quit) {
         //SDL_SetWindowAlwaysOnTop(win, SDL_FALSE);
@@ -140,20 +141,20 @@ int main(int argc, char** argv) {
                 }
                 if(event.button.button == SDL_BUTTON_LEFT) g->setMode(0);
                 else g->setMode(1);
-                break;
+                break;/*
             case SDL_MOUSEMOTION:
                 //grid_cursor_ghost.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 //grid_cursor_ghost.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
 
                 if (!mouse_active)
                     mouse_active = SDL_TRUE;
-                break;
-            case SDL_WINDOWEVENT:
+                break;*/
+            /*case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_ENTER && !mouse_hover)
                     mouse_hover = SDL_TRUE;
                 else if (event.window.event == SDL_WINDOWEVENT_LEAVE && mouse_hover)
                     mouse_hover = SDL_FALSE;
-                break;
+                break;*/
             case SDL_QUIT:
                 quit = SDL_TRUE;
                 break;
@@ -209,10 +210,9 @@ int main(int argc, char** argv) {
             if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
             end = Box(game_end, "End");
             end.name = "VICTORY";
-            end.drawBox(rend);
         }
         if(game_defeat == SDL_TRUE) {
-            if(g->getFieldstoreveal() != -1) {
+            if(g->getFieldstoreveal() != -1 && menu_clicked == SDL_FALSE) {
                 gameOver(grid_cursor.x, grid_cursor.y, rend, g, grey_mine, red_mine, flagimg);
                 g->setDefeat();
             }
@@ -226,12 +226,11 @@ int main(int argc, char** argv) {
             if(g->getHeight()%2) game_end.y +=(GRID_CELL_SIZE/2);
             end = Box(game_end, "End");
             end.name = "GAME OVER";
-            end.drawBox(rend);
         }
         if(menu_clicked == SDL_TRUE) {
             switch(menu_choice) {
                 case 1:
-                    setParams();
+                    setParams(rend, grid_cursor, g);
                     g = new Grid(10, 10, 20);
                     SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
                     reloadGrid(rend, g, flagimg);
@@ -247,27 +246,36 @@ int main(int argc, char** argv) {
                     game_victory = SDL_FALSE;
                     break;
                 case 3:
-                    //cout << "save ";
-                    if(g->getFirst()) {
-                        Menu_Msg.name = "You cant save an unloaded game"; // - please start playing first
-                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*8);
+                    if(game_defeat == SDL_TRUE || game_victory == SDL_TRUE) {
+                        Menu_Msg.name = "Save failed"; // - please start playing first
+                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*6);
                         Menu_Msg.setAreaVar('h', GRID_CELL_SIZE*2);
-                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4));
+                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-3));
+                        Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4));
+                        if(g->getWidth()%2) Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4)+GRID_CELL_SIZE/2);
+                        if(g->getHeight()%2) Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4)+GRID_CELL_SIZE/2);
+
+                        reload = SDL_TRUE;
+                    }else if(g->getFirst()) {
+                        Menu_Msg.name = "Save failed"; // - please start playing first
+                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*6);
+                        Menu_Msg.setAreaVar('h', GRID_CELL_SIZE*2);
+                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-3));
                         Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-2));
                         if(g->getWidth()%2) Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4)+GRID_CELL_SIZE/2);
                         if(g->getHeight()%2) Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4)+GRID_CELL_SIZE/2);
                         
                         Menu_Msg2 = Box(Menu_Msg);
-                        Menu_Msg2.name = "please start playing first";
+                        Menu_Msg2.name = "start playing";
                         Menu_Msg2.setAreaVar('y', Menu_Msg.getAreaVar('y')+Menu_Msg.getAreaVar('h'));
 
                         reload = SDL_TRUE;
                     }else {
-                        Menu_Msg.name = "Your game was saved successfully";
-                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*8);
+                        Menu_Msg.name = "Game saved";
+                        Menu_Msg.setAreaVar('w', GRID_CELL_SIZE*4);
                         Menu_Msg.setAreaVar('h', GRID_CELL_SIZE*2);
-                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4));
-                        Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-2));
+                        Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-2));
+                        Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-1));
                         if(g->getWidth()%2) Menu_Msg.setAreaVar('x', GRID_CELL_SIZE*((g->getWidth()/2)-4)+GRID_CELL_SIZE/2);
                         if(g->getHeight()%2) Menu_Msg.setAreaVar('y', GRID_CELL_SIZE*((g->getHeight()/2)-4)+GRID_CELL_SIZE/2);
                         g->saveGame();
@@ -289,9 +297,11 @@ int main(int argc, char** argv) {
                             reloadGrid(rend, g, flagimg);
                         //}
                     }else {
-                        Menu_Msg.name = "No save file detected";
+                        Menu_Msg.name = "No save file";
                         Menu_Msg.drawBox(rend);
                     }
+                    game_defeat = SDL_FALSE;
+                    game_victory = SDL_FALSE;
                     break;
             }
             menu_clicked = SDL_FALSE;
@@ -301,9 +311,14 @@ int main(int argc, char** argv) {
         if(quit == SDL_TRUE) {
             SDL_Quit();
         }
+        if(game_victory == SDL_TRUE || game_defeat == SDL_TRUE) {
+            end.drawBox(rend);
+        }
         if(reload == SDL_TRUE) {
             Menu_Msg.drawBox(rend);
-            Menu_Msg2.drawBox(rend);
+            if(game_victory != SDL_TRUE || game_defeat != SDL_TRUE) {
+                Menu_Msg2.drawBox(rend);
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 #include "funcs.h"
 
-bool yorN(SDL_Renderer* rend, int w, int h, string question) {
+/*bool yorN(SDL_Renderer* rend, int w, int h, string question) {
     SDL_Rect choice_area {
         .x = GRID_CELL_SIZE*((w/2)-3),
         .y = GRID_CELL_SIZE*((h/2)-2),
@@ -36,7 +36,7 @@ bool yorN(SDL_Renderer* rend, int w, int h, string question) {
     };
     scanf("%d", &w);
     return 0;
-}
+}*/
 
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y) {
     if(x < (g->getWidth()*GRID_CELL_SIZE)/4) {                                       //flags on
@@ -151,7 +151,7 @@ void gameOver(int x, int y, SDL_Renderer* rend, Grid* g, SDL_Texture* grey_mine,
         Cell.setAreaVar('x', Cell.getAreaVar('x')+GRID_CELL_SIZE);
         Cell.setAreaVar('y', Cell.getAreaVar('y')-GRID_CELL_SIZE*g->getHeight());
     }
-    cout << x << " " << y;
+    //cout << x << " " << y;
     Red.setAreaVar('x', x);
     Red.setAreaVar('y', y);
     Red.drawBox(rend);
@@ -208,8 +208,61 @@ void setMenu(SDL_Renderer* rend, Grid* g) {
     menu->drawBox(rend);
 }
 
-void setParams() {
-    ;
+void setParams(SDL_Renderer* rend, SDL_Rect grid_cursor, Grid* g) {
+    SDL_bool quit = SDL_FALSE;
+    SDL_bool mouse_click = SDL_FALSE;
+    //SDL_bool menu_clicked = SDL_FALSE;
+
+    SDL_Point cursor = {
+        grid_cursor.x,
+        grid_cursor.y,
+    };
+
+    SDL_Rect base = {
+        .x = 0,
+        .y = 0,
+        .w = GRID_CELL_SIZE*5,
+        .h = GRID_CELL_SIZE*5,
+    };
+    Box Base = Box(base, {255,255,255}, {0,0,0, 255}, "");
+    Base.drawBox(rend);
+
+    SDL_Rect leave = {
+        .x = Base.getAreaVar('x')+Base.getAreaVar('w')-GRID_CELL_SIZE,
+        .y = Base.getAreaVar('y'),
+        .w = GRID_CELL_SIZE,
+        .h = GRID_CELL_SIZE,
+    };
+    Box Leave = Box(leave, {0,0,0}, {0,0,0,255}, "X");
+    Leave.border_thickness = 0;
+
+    
+    while (!quit) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_MOUSEBUTTONDOWN:
+                    cursor.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
+                    cursor.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
+                    mouse_click = SDL_TRUE;
+                    break;
+                case SDL_QUIT:
+                    quit = SDL_TRUE;
+                    break;
+            }
+        }
+
+
+        if(mouse_click == SDL_TRUE && SDL_PointInRect(&cursor, &grid_cursor) == SDL_TRUE) {
+            return;
+        }
+
+
+
+
+    }
+    SDL_Quit();
+    exit(1);
 }
 
 
@@ -519,7 +572,7 @@ void ImageBox::drawBox(SDL_Renderer* rend) {
     }
 
     SDL_RenderCopy(rend, image, NULL, &image_area);
-    cout << endl << image_area.x << " " << image_area.y << " " << image_area.w << " " << image_area.h;
+    //cout << endl << image_area.x << " " << image_area.y << " " << image_area.w << " " << image_area.h;
 }
 
 bool ImageBox::setAreaVar(char var, int n) {

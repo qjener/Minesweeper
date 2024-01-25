@@ -239,4 +239,4 @@ Grid* reset(SDL_Renderer* rend, Grid* g);
 Grid* loadGame(SDL_Renderer* rend);
 void reloadGrid(SDL_Renderer* rend, Grid* g, SDL_Texture* flagimg);
 void setMenu(SDL_Renderer* rend, Grid* g);
-void setParams();
+void setParams(SDL_Renderer* rend, SDL_Rect grid_cursor, Grid* g);
