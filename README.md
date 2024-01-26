@@ -5,7 +5,6 @@
 
 ## To-Do:
 
-    -set size cant ask for params
     -timer
 
 ## Compile and run:

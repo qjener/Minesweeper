@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
                                     SDL_WINDOWPOS_CENTERED,
                                     SDL_WINDOWPOS_CENTERED,
                                     16*GRID_CELL_SIZE, (16+1)*GRID_CELL_SIZE, 0); 
-    SDL_SetWindowAlwaysOnTop(win, SDL_TRUE);
+
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
@@ -59,15 +59,17 @@ int main(int argc, char** argv) {
         .h = GRID_CELL_SIZE,
     };
     SDL_Color grid_cursor_color = {255, 255, 255, 0}; // White
+    SDL_Point cursor;
 
     SDL_bool quit = SDL_FALSE; 
-    SDL_bool mouse_active = SDL_FALSE;
-    SDL_bool mouse_hover = SDL_FALSE;
+    //SDL_bool mouse_active = SDL_FALSE;
+    //SDL_bool mouse_hover = SDL_FALSE;
     SDL_bool game_defeat = SDL_FALSE;
     SDL_bool game_victory = SDL_FALSE;
     SDL_bool mouse_click = SDL_FALSE;
     SDL_bool menu_clicked = SDL_FALSE;
     SDL_bool reload = SDL_FALSE;
+    SDL_bool set_size = SDL_FALSE;
     
     int menu_choice;
 
@@ -131,6 +133,8 @@ int main(int argc, char** argv) {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_MOUSEBUTTONDOWN:
+                cursor.x = event.motion.x;
+                cursor.y = event.motion.y;
                 grid_cursor.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 grid_cursor.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
                 grid_cursor_menu.x = (event.motion.x / menu_button_width) * menu_button_width;
@@ -173,7 +177,7 @@ int main(int argc, char** argv) {
             SDL_RenderFillRect(rend, &grid_cursor_ghost);
         }*/
         // clicking on the playing field
-        if(game_victory == SDL_FALSE && game_defeat == SDL_FALSE && menu_clicked == SDL_FALSE && mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
+        if(game_victory == SDL_FALSE && set_size == SDL_FALSE && game_defeat == SDL_FALSE && menu_clicked == SDL_FALSE && mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() && (grid_cursor.y/GRID_CELL_SIZE) < g->getHeight() ) {
                 //printf("%u, %u\n", grid_cursor.x, grid_cursor.y);
             if(!g->getMode()) {
                 if(g->getFirst()) {
@@ -183,15 +187,42 @@ int main(int argc, char** argv) {
             } else {
                 g->flagPos(rend, &grid_cursor_color, &grid_cursor, flagimg);
             }
-        }
-
-        // clicking on the menu
-        if(mouse_click == SDL_TRUE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
+        }else if(mouse_click == SDL_TRUE && set_size == SDL_FALSE && (grid_cursor.x/GRID_CELL_SIZE) < g->getWidth() &&  (grid_cursor.y/GRID_CELL_SIZE) > (g->getHeight() -1)) {
             menu_choice = useMenu(rend, g, grid_cursor_menu.x, grid_cursor_menu.y);
             menu_clicked = SDL_TRUE;
             if(!menu_choice) {
                 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Menu Error", "There was an error when clicking the menu", win);
                 quit = SDL_TRUE;
+            }
+        }else if(mouse_click == SDL_TRUE && set_size == SDL_TRUE) {
+            if(cursor.x < GRID_CELL_SIZE*(g->getWidth()/2)-2.5*GRID_CELL_SIZE || cursor.x > GRID_CELL_SIZE*(g->getWidth()/2)+2.5*GRID_CELL_SIZE || cursor.y < GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE || cursor.y > GRID_CELL_SIZE*(g->getHeight()/2)+2.5*GRID_CELL_SIZE) {
+                set_size = SDL_FALSE;
+                reloadGrid(rend, g, flagimg);
+            }else if(cursor.x > GRID_CELL_SIZE*(g->getWidth()/2)-2.5*GRID_CELL_SIZE+20 || cursor.y < GRID_CELL_SIZE*(g->getWidth()/2)+2.5*GRID_CELL_SIZE-20) {
+                if(cursor.y > GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18 && cursor.y < GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18+GRID_CELL_SIZE) {
+                    g = new Grid(9, 9, 10);
+                    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
+                    reloadGrid(rend, g, flagimg);
+                    setMenu(rend, g);
+                    menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                    set_size = SDL_FALSE;
+                }else if(cursor.y > GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18+GRID_CELL_SIZE+18 && cursor.y < GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18+GRID_CELL_SIZE+18+GRID_CELL_SIZE) {
+                    g = new Grid(16, 16, 40);
+                    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
+                    reloadGrid(rend, g, flagimg);
+                    setMenu(rend, g);
+                    menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                    set_size = SDL_FALSE;
+                }else if(cursor.y > GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18+GRID_CELL_SIZE+18+GRID_CELL_SIZE+18 && cursor.y < GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE+18+GRID_CELL_SIZE+18+GRID_CELL_SIZE+18+GRID_CELL_SIZE) {
+                    g = new Grid(30, 24, 160);
+                    cout << g->getWidth();
+                    //g->printGrid();
+                    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
+                    reloadGrid(rend, g, flagimg);
+                    setMenu(rend, g);
+                    menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                    set_size = SDL_FALSE;
+                }
             }
         }
 
@@ -231,11 +262,7 @@ int main(int argc, char** argv) {
             switch(menu_choice) {
                 case 1:
                     setParams(rend, grid_cursor, g);
-                    g = new Grid(10, 10, 20);
-                    SDL_SetWindowSize(win, g->getWidth()*GRID_CELL_SIZE, (1+g->getHeight())*GRID_CELL_SIZE);
-                    reloadGrid(rend, g, flagimg);
-                    setMenu(rend, g);
-                    menu_button_width = (g->getWidth()*GRID_CELL_SIZE)/4;
+                    set_size = SDL_TRUE;
                     game_defeat = SDL_FALSE;
                     game_victory = SDL_FALSE;
                     break;

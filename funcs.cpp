@@ -209,60 +209,33 @@ void setMenu(SDL_Renderer* rend, Grid* g) {
 }
 
 void setParams(SDL_Renderer* rend, SDL_Rect grid_cursor, Grid* g) {
-    SDL_bool quit = SDL_FALSE;
-    SDL_bool mouse_click = SDL_FALSE;
-    //SDL_bool menu_clicked = SDL_FALSE;
-
-    SDL_Point cursor = {
-        grid_cursor.x,
-        grid_cursor.y,
-    };
-
     SDL_Rect base = {
-        .x = 0,
-        .y = 0,
+        .x = GRID_CELL_SIZE*(g->getWidth()/2)-2.5*GRID_CELL_SIZE,
+        .y = GRID_CELL_SIZE*(g->getHeight()/2)-2.5*GRID_CELL_SIZE,
         .w = GRID_CELL_SIZE*5,
         .h = GRID_CELL_SIZE*5,
     };
-    Box Base = Box(base, {255,255,255}, {0,0,0, 255}, "");
+    Box Base = Box(base, {255,255,255}, {255,255,255,255}, "");
+    Base.border_thickness = 2;
     Base.drawBox(rend);
 
-    SDL_Rect leave = {
-        .x = Base.getAreaVar('x')+Base.getAreaVar('w')-GRID_CELL_SIZE,
-        .y = Base.getAreaVar('y'),
-        .w = GRID_CELL_SIZE,
+    SDL_Rect buttons = {
+        .x = Base.getAreaVar('x')+20,
+        .y = Base.getAreaVar('y')+18,
+        .w = Base.getAreaVar('w')-40,
         .h = GRID_CELL_SIZE,
     };
-    Box Leave = Box(leave, {0,0,0}, {0,0,0,255}, "X");
-    Leave.border_thickness = 0;
+    Box Buttons = Box(buttons, {0,0,0}, {255,255,255,255}, "9x9 10 Mines");
+    Buttons.border_thickness = Base.border_thickness;
+    Buttons.drawBox(rend);
 
-    
-    while (!quit) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_MOUSEBUTTONDOWN:
-                    cursor.x = (event.motion.x / GRID_CELL_SIZE) * GRID_CELL_SIZE;
-                    cursor.y = (event.motion.y / GRID_CELL_SIZE) * GRID_CELL_SIZE;
-                    mouse_click = SDL_TRUE;
-                    break;
-                case SDL_QUIT:
-                    quit = SDL_TRUE;
-                    break;
-            }
-        }
+    Buttons.setAreaVar('y', Buttons.getAreaVar('y')+GRID_CELL_SIZE+18);
+    Buttons.name = "16x16 40 Mines";
+    Buttons.drawBox(rend);
 
-
-        if(mouse_click == SDL_TRUE && SDL_PointInRect(&cursor, &grid_cursor) == SDL_TRUE) {
-            return;
-        }
-
-
-
-
-    }
-    SDL_Quit();
-    exit(1);
+    Buttons.setAreaVar('y', Buttons.getAreaVar('y')+GRID_CELL_SIZE+18);
+    Buttons.name = "30x24 160 Mines";
+    Buttons.drawBox(rend);
 }
 
 

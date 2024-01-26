@@ -1,5 +1,5 @@
 CC      := g++
-CFLAGS := -Wall -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image #-mwindows
+CFLAGS := -Wall -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -mwindows
 TARGET := Minesweeper
 
 SRC     := $(wildcard *.cpp)

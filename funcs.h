@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define GRID_SIZE 500                               //500 is really big, any bigger would be pain to play (especially in the terminal)
+#define GRID_SIZE 1000                               //500 is really big, any bigger would be pain to play (especially in the terminal)
 #define GRID_CELL_SIZE 36                           //Amount of pixels per cell
 
 class Grid {                                            //THE MATRIX
@@ -41,6 +41,7 @@ public:
         }
     }
     Grid(int w, int h, int m) : width(w), height(h), nmines(m) {
+        cout << width;
         fieldstoreveal = width*height-nmines;
         flags = nmines;
         first = true;
@@ -232,10 +233,7 @@ public:
 //if you comment a function like this you can alway see their description when hovering them anywhere
 //the description should say what the function does and what what it needs as parameter
 void gameOver(int x, int y, SDL_Renderer* rend, Grid* g, SDL_Texture* grey_mine, SDL_Texture* red_mine, SDL_Texture* flagimg);
-void victory(SDL_Renderer* rend, Grid* g, SDL_Surface* win);
-bool yorN(SDL_Renderer* rend, int w, int h, string question);
 int useMenu(SDL_Renderer* rend, Grid* g, int x, int y);
-Grid* reset(SDL_Renderer* rend, Grid* g);
 Grid* loadGame(SDL_Renderer* rend);
 void reloadGrid(SDL_Renderer* rend, Grid* g, SDL_Texture* flagimg);
 void setMenu(SDL_Renderer* rend, Grid* g);
