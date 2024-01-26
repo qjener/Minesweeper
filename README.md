@@ -1,4 +1,4 @@
-#I WILL NOT CONTINUE THIS PROJECT
+# I WILL NOT CONTINUE THIS PROJECT
 # Minesweeper
 
     Just recreating Minesweeper with SDL2 for fun
