@@ -3,6 +3,8 @@
     Just recreating Minesweeper with SDL2 for fun
     This project started in c as a task for my university and is being translated to c++ now
 
+    #I WILL NOT CONTINUE THIS PROJECT
+
 ## To-Do:
 
     -timer
