@@ -6,6 +6,3 @@
 
 # Executables
 *.exe
-
-#Libraries
-SDL/

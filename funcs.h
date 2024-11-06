@@ -140,7 +140,7 @@ public:
         border_color = {0, 0, 0, 0};
         border_thickness = 5;
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
-        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);        
+        font = TTF_OpenFont("visuals/Lucida Console Regular.ttf", 24);        
     }
     Box(Box &b) : area(b.area), text_rect(b.text_rect), text(b.text), text_color(b.text_color), area_color(b.area_color), border_color(b.border_color), border_thickness(b.border_thickness), name(b.name), font(b.font) {}
     Box(SDL_Rect a, string n) : area(a), name(n) {
@@ -155,7 +155,7 @@ public:
         text_color = {0, 0, 0, 0};
         border_color = {0, 0, 0, 0};
         border_thickness = 5;
-        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);
+        font = TTF_OpenFont("visuals/Lucida Console Regular.ttf", 24);
     }
     Box(SDL_Rect a, SDL_Color tc, SDL_Color ac, string n) : area(a), text_color(tc), area_color(ac),name(n) {
         //cout << area.x << area.y << " " << area.w << area.h << name << endl;
@@ -167,7 +167,7 @@ public:
         };
         border_color = {0, 0, 0, 0};
         border_thickness = 5;
-        font = TTF_OpenFont("Lucida Console Regular.ttf", 24);
+        font = TTF_OpenFont("visuals/Lucida Console Regular.ttf", 24);
     }
 
     /**

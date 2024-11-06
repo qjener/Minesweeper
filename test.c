@@ -7,7 +7,14 @@ int main(int argc, char** argv) {
 return 0;
 }*/
 
+#include <stdio.h>
 
+int main() {
+	printf("xdtjigubypdsxur");
+	return 0;
+}
+
+/*
 #include "funcs.h"
 
 int main(int argc, char** argv) {
@@ -55,7 +62,7 @@ int main(int argc, char** argv) {
         SDL_RenderPresent( rend );
     }
 }
-
+*/
 
 /*
 int main(int argc, char** argv) {

@@ -22,9 +22,9 @@ int main(int argc, char** argv) {
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
     SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
 
-    SDL_Texture* flagimg = IMG_LoadTexture(rend, "flag.png");
-    SDL_Texture* grey_mine = IMG_LoadTexture(rend, "grey_mine.png");
-    SDL_Texture* red_mine = IMG_LoadTexture(rend, "red_mine.png");
+    SDL_Texture* flagimg = IMG_LoadTexture(rend, "visuals/flag.png");
+    SDL_Texture* grey_mine = IMG_LoadTexture(rend, "visuals/grey_mine.png");
+    SDL_Texture* red_mine = IMG_LoadTexture(rend, "visuals/red_mine.png");
 
 
     Grid *g = new Grid();
